@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="page-section">
+<div class="container col-md-6">
+
+    <div class="card p-4 shadow">
+        <h3 class="text-center mb-4">Donate Zakat</h3>
+
+        <form method="POST">
+            <label>Charity</label>
+            <select name="charity" class="form-control mb-3">
+                <option>Islamic Relief</option>
+                <option>Muslim Hands</option>
+                <option>Penny Appeal</option>
+            </select>
+
+            <label>Amount (€)</label>
+            <input type="number" name="amount" class="form-control mb-3" required>
+
+            <button class="btn btn-success w-100">Donate</button>
+        </form>
+
+        {% if confirmation %}
+        <div class="alert alert-success mt-3 text-center">
+            {{ confirmation }}
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+</section>
+
+{% endblock %}

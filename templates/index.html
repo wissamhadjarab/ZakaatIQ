@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- HERO SECTION -->
+<section class="hero-section d-flex align-items-center justify-content-center">
+    <div class="hero-overlay">
+        <div class="hero-content text-center">
+
+            <h1 class="hero-arabic">زكاة الذكاء</h1>
+
+            <h2 class="hero-title mb-4">ZakaatIQ – Smart Islamic Finance Assistant</h2>
+
+            <p class="hero-translation mb-4">
+                “Take from their wealth a charity by which you purify them and elevate them.”
+                <br>— Surah At-Tawbah (9:103)
+            </p>
+
+            <!-- BUTTON GROUP -->
+            <div class="homepage-btn-container">
+
+                <a href="{{ url_for('eligibility') }}" class="homepage-btn">
+                    Zakat Eligibility
+                </a>
+
+                <a href="{{ url_for('forecast') }}" class="homepage-btn">
+                    AI Forecast
+                </a>
+
+                <a href="{{ url_for('donate') }}" class="homepage-btn">
+                    Donate
+                </a>
+
+                {% if 'user_id' in session %}
+                <a href="{{ url_for('dashboard') }}" class="homepage-btn">
+                    Go to Dashboard
+                </a>
+                {% endif %}
+
+
+                <a href="{{ url_for('auth.login') }}" class="homepage-btn">
+                    Login
+                </a>
+
+                <a href="{{ url_for('auth.register') }}" class="homepage-btn">
+                    Register
+                </a>
+
+            </div>
+
+        </div>
+    </div>
+</section>
+
+{% endblock %}

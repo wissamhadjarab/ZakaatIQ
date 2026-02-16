@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="page-section">
+
+    <!-- Heading -->
+    <div class="text-center mb-5">
+        <h2 style="color: var(--gold); font-weight: 700;">Your Dashboard</h2>
+        <p class="lead">Assalamu Alaikum, {{ username }}. Here is your financial overview.</p>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="container mb-5">
+        <div class="row g-4">
+
+            <div class="col-md-4">
+                <a href="{{ url_for('eligibility') }}" class="btn homepage-btn w-100 p-4">
+                    Zakat Eligibility
+                </a>
+            </div>
+
+            <div class="col-md-4">
+                <a href="{{ url_for('forecast') }}" class="btn homepage-btn w-100 p-4">
+                    AI Forecast
+                </a>
+            </div>
+
+            <div class="col-md-4">
+                <a href="{{ url_for('donate') }}" class="btn homepage-btn w-100 p-4">
+                    Donate
+                </a>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Zakat History Section -->
+    <div class="container mt-5">
+        
+        <h3 class="mb-3" style="color: var(--gold); font-weight: 700;">Zakat Eligibility History</h3>
+        <p class="text-muted mb-4">Your past Zakat calculations are listed below.</p>
+
+        {% if combined %}
+        <div class="card p-3">
+
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped">
+
+                    <thead style="background: var(--gold); color: #fff;">
+                        <tr>
+                            <th>Date</th>
+                            <th>Income (€)</th>
+                            <th>Savings (€)</th>
+                            <th>Gold (g)</th>
+                            <th>Debts (€)</th>
+                            <th>Result</th>
+                            <th>Explanation</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for row, res in combined %}
+                        <tr>
+                            <td>{{ row.created_at }}</td>
+                            <td>{{ row.income }}</td>
+                            <td>{{ row.savings }}</td>
+                            <td>{{ row.gold }}</td>
+                            <td>{{ row.debts }}</td>
+                            <td><strong>{{ res.result }}</strong></td>
+                            <td>{{ res.explanation }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+
+                </table>
+            </div>
+        </div>
+
+        {% else %}
+        <p class="text-muted">No Zakat history available yet.</p>
+        {% endif %}
+
+    </div>
+
+</section>
+
+{% endblock %}

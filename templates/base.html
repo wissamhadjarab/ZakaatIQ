@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>ZakaatIQ – Smart Islamic Finance Assistant</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- BOOTSTRAP & MAIN CSS -->
+    <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+
+<body>
+
+<!-- Top Bar -->
+<div class="topbar">
+    <div class="container d-flex justify-content-between">
+        <span class="text-light small">Contact: info@zakaatiq.com</span>
+        <span class="text-light small">“Charity extinguishes sins like water extinguishes fire.” — Prophet ﷺ</span>
+    </div>
+</div>
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="{{ url_for('index') }}">
+            <span class="logo-text">ZakaatIQ</span>
+        </a>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <ul class="navbar-nav ms-auto">
+
+    <li class="nav-item">
+        <a class="nav-link" href="{{ url_for('index') }}">Home</a>
+    </li>
+
+    {% if 'user_id' in session %}
+        <!-- Show when logged in -->
+        <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('eligibility') }}">Zakat Eligibility</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
+        </li>
+
+    {% else %}
+        <!-- Show when NOT logged in -->
+        <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('eligibility') }}">Zakat Eligibility</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('auth.login') }}">Login</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('auth.register') }}">Register</a>
+        </li>
+    {% endif %}
+
+</ul>
+
+    </div>
+</nav>
+
+<!-- MAIN PAGE CONTENT -->
+{% block content %}
+{% endblock %}
+
+<!-- FOOTER -->
+<footer class="footer mt-5 py-4 text-center text-light">
+    <p class="mb-0">&copy; 2025 ZakaatIQ — Smart Islamic Finance Assistant</p>
+</footer>
+
+<script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+
+</body>
+</html>
