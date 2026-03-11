@@ -1,87 +1,167 @@
 {% extends "base.html" %}
 {% block content %}
 
-<section class="page-section">
+<div class="container py-5">
 
-    <!-- Heading -->
-    <div class="text-center mb-5">
-        <h2 style="color: var(--gold); font-weight: 700;">Your Dashboard</h2>
-        <p class="lead">Assalamu Alaikum, {{ username }}. Here is your financial overview.</p>
-    </div>
+<!-- PAGE HEADER -->
+<div class="text-center mb-5">
+    <h2 class="gold-text fw-bold">Your Dashboard</h2>
+    <p class="lead">Assalamu Alaikum, {{ username }}. Here is your financial overview.</p>
+</div>
 
-    <!-- Quick Actions -->
-    <div class="container mb-5">
-        <div class="row g-4">
 
-            <div class="col-md-4">
-                <a href="{{ url_for('eligibility') }}" class="btn homepage-btn w-100 p-4">
-                    Zakat Eligibility
-                </a>
-            </div>
+<!-- QUICK ACTION CARDS -->
+<div class="row g-4 mb-5">
 
-            <div class="col-md-4">
-                <a href="{{ url_for('forecast') }}" class="btn homepage-btn w-100 p-4">
-                    AI Forecast
-                </a>
-            </div>
+<!-- Zakat Eligibility -->
+<div class="col-md-4">
+<a href="{{ url_for('eligibility') }}" style="text-decoration:none;">
+<div class="dashboard-card">
 
-            <div class="col-md-4">
-                <a href="{{ url_for('donate') }}" class="btn homepage-btn w-100 p-4">
-                    Donate
-                </a>
-            </div>
+<div class="card-icon">
+<i class="bi bi-calculator"></i>
+</div>
 
-        </div>
-    </div>
+<h4 class="mt-3">Zakat Eligibility</h4>
+<p class="text-muted">Calculate your Zakat obligation.</p>
 
-    <!-- Zakat History Section -->
-    <div class="container mt-5">
-        
-        <h3 class="mb-3" style="color: var(--gold); font-weight: 700;">Zakat Eligibility History</h3>
-        <p class="text-muted mb-4">Your past Zakat calculations are listed below.</p>
+</div>
+</a>
+</div>
 
-        {% if combined %}
-        <div class="card p-3">
 
-            <div class="table-responsive">
-                <table class="table table-bordered table-striped">
+<!-- AI Forecast -->
+<div class="col-md-4">
+<a href="{{ url_for('forecast') }}" style="text-decoration:none;">
+<div class="dashboard-card">
 
-                    <thead style="background: var(--gold); color: #fff;">
-                        <tr>
-                            <th>Date</th>
-                            <th>Income (€)</th>
-                            <th>Savings (€)</th>
-                            <th>Gold (g)</th>
-                            <th>Debts (€)</th>
-                            <th>Result</th>
-                            <th>Explanation</th>
-                        </tr>
-                    </thead>
+<div class="card-icon">
+<i class="bi bi-graph-up"></i>
+</div>
 
-                    <tbody>
-                        {% for row, res in combined %}
-                        <tr>
-                            <td>{{ row.created_at }}</td>
-                            <td>{{ row.income }}</td>
-                            <td>{{ row.savings }}</td>
-                            <td>{{ row.gold }}</td>
-                            <td>{{ row.debts }}</td>
-                            <td><strong>{{ res.result }}</strong></td>
-                            <td>{{ res.explanation }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
+<h4 class="mt-3">AI Forecast</h4>
+<p class="text-muted">Predict your financial future.</p>
 
-                </table>
-            </div>
-        </div>
+</div>
+</a>
+</div>
 
-        {% else %}
-        <p class="text-muted">No Zakat history available yet.</p>
-        {% endif %}
 
-    </div>
+<!-- Donate -->
+<div class="col-md-4">
+<a href="{{ url_for('donate') }}" style="text-decoration:none;">
+<div class="dashboard-card">
 
-</section>
+<div class="card-icon">
+<i class="bi bi-heart"></i>
+</div>
+
+<h4 class="mt-3">Donate Zakat</h4>
+<p class="text-muted">Give to verified charities.</p>
+
+</div>
+</a>
+</div>
+
+</div>
+
+
+<!-- ZAKAT SUMMARY -->
+{% if zakat_due %}
+
+<div class="dashboard-card mb-5">
+
+<h4 class="gold-text">Your Latest Zakat Calculation</h4>
+
+<h2 class="mt-3">€{{ zakat_due }}</h2>
+
+<p class="text-muted">
+
+<strong>Days Remaining Until Next Zakat:</strong>
+
+{% if days_remaining is not none %}
+    {{ days_remaining }} days
+{% else %}
+    Not calculated
+{% endif %}
+
+</p>
+
+</div>
+
+{% endif %}
+
+
+
+<!-- ZAKAT HISTORY -->
+<div class="mt-5">
+
+<h3 class="gold-text fw-bold mb-3">Zakat Eligibility History</h3>
+<p class="text-muted mb-4">Your past Zakat calculations are listed below.</p>
+
+{% if combined %}
+
+<div class="card shadow-sm">
+
+<div class="table-responsive">
+
+<table class="table table-hover mb-0">
+
+<thead style="background: var(--gold); color: white;">
+<tr>
+    <th>Date</th>
+    <th>Income (€)</th>
+    <th>Savings (€)</th>
+    <th>Gold (g)</th>
+    <th>Debts (€)</th>
+    <th>Result</th>
+    <th>Explanation</th>
+</tr>
+</thead>
+
+<tbody>
+
+{% for row, res in combined %}
+
+<tr>
+<td>{{ row.created_at }}</td>
+<td>{{ row.income }}</td>
+<td>{{ row.savings }}</td>
+<td>{{ row.gold }}</td>
+<td>{{ row.debts }}</td>
+<td><strong>{{ res.result }}</strong></td>
+<td>{{ res.explanation }}</td>
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+<div class="card mt-4 p-4 shadow-sm">
+
+<h4 style="color: var(--gold);">Zakat Payment Progress</h4>
+
+<p><strong>Total Zakat Due:</strong> €{{ zakat_due }}</p>
+
+<p><strong>Donated This Year:</strong> €{{ donated }}</p>
+
+<p><strong>Remaining Zakat:</strong> €{{ remaining_zakat }}</p>
+
+</div>
+</div>
+
+</div>
+
+{% else %}
+
+<p class="text-muted">No Zakat history available yet.</p>
+
+{% endif %}
+
+</div>
+
+</div>
 
 {% endblock %}
