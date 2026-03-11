@@ -101,7 +101,7 @@ def index():
     return render_template("mission.html")
 
 @app.route("/home")
-def index():
+def home():
     return render_template("index.html")
 
 # -----------------------------
@@ -269,15 +269,58 @@ def forecast():
 # -----------------------------
 @app.route("/donate", methods=["GET", "POST"])
 def donate():
+    if "user_id" not in session:
+        return redirect(url_for("auth.login"))
+
+    db = get_db()
+    cur = db.cursor()
+
+    # Load approved charities only
+    cur.execute("""
+        SELECT id, name, description
+        FROM charities
+        WHERE approved = TRUE
+        ORDER BY name
+    """)
+    charities = cur.fetchall()
+
     confirmation = None
 
     if request.method == "POST":
-        charity = request.form.get("charity")
+        charity_id = request.form.get("charity")
         amount = request.form.get("amount")
-        confirmation = f"You successfully donated €{amount} to {charity} (Demo Mode)."
 
-    return render_template("donate.html", confirmation=confirmation)
+        # Get charity name from selected id
+        cur.execute("""
+            SELECT name
+            FROM charities
+            WHERE id = %s AND approved = TRUE
+        """, (charity_id,))
+        selected_charity = cur.fetchone()
 
+        if selected_charity:
+            charity_name = selected_charity[0]
+
+            cur.execute("""
+                INSERT INTO donations (user_id, charity_name, amount, reference)
+                VALUES (%s, %s, %s, %s)
+            """, (
+                session["user_id"],
+                charity_name,
+                amount,
+                "DEMO-DONATION"
+            ))
+            db.commit()
+
+            confirmation = f"Your donation of €{amount} to {charity_name} has been recorded successfully."
+        else:
+            confirmation = "Invalid charity selection."
+
+    return render_template(
+        "donate.html",
+        charities=charities,
+        confirmation=confirmation
+    )
 # -----------------------------
 # LOGOUT
 # -----------------------------
