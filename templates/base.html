@@ -8,6 +8,77 @@
     <!-- BOOTSTRAP & MAIN CSS -->
     <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+
+    <!-- BOOTSTRAP ICONS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+
+<style>
+
+:root{
+    --gold:#C9A227;
+    --soft-gold:#f5efe1;
+}
+
+/* PAGE BACKGROUND */
+body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;
+    background:#f7f7f7;
+}
+
+/* NAVBAR BRAND */
+.logo-text{
+    color:var(--gold);
+}
+
+/* DASHBOARD CARDS */
+.dashboard-card{
+    background:white;
+    border-radius:18px;
+    padding:30px;
+    text-align:center;
+    transition:all .3s ease;
+    box-shadow:0 10px 30px rgba(0,0,0,0.08);
+}
+
+.dashboard-card:hover{
+    transform:translateY(-6px);
+    box-shadow:0 20px 40px rgba(0,0,0,0.12);
+}
+
+/* CARD ICON */
+.card-icon{
+    font-size:42px;
+    color:var(--gold);
+}
+
+/* GOLD TEXT */
+.gold-text{
+    color:var(--gold);
+}
+
+/* PAGE FADE ANIMATION */
+.fade-up{
+    animation:fadeUp .7s ease;
+}
+
+@keyframes fadeUp{
+from{opacity:0; transform:translateY(20px)}
+to{opacity:1; transform:translateY(0)}
+}
+
+/* TOPBAR */
+.topbar{
+    background:#111;
+    padding:6px 0;
+}
+
+/* FOOTER */
+.footer{
+    background:#111;
+}
+
+</style>
+
 </head>
 
 <body>
@@ -21,7 +92,7 @@
 </div>
 
 <!-- NAVBAR -->
-<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm py-3">
     <div class="container">
         <a class="navbar-brand fw-bold" href="{{ url_for('index') }}">
             <span class="logo-text">ZakaatIQ</span>
@@ -36,9 +107,12 @@
     <li class="nav-item">
         <a class="nav-link" href="{{ url_for('index') }}">Home</a>
     </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{{ url_for('mission') }}">Mission</a>
+    </li>
 
     {% if 'user_id' in session %}
-        <!-- Show when logged in -->
+        <!-- Logged In -->
         <li class="nav-item">
             <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
         </li>
@@ -50,7 +124,7 @@
         </li>
 
     {% else %}
-        <!-- Show when NOT logged in -->
+        <!-- Not Logged In -->
         <li class="nav-item">
             <a class="nav-link" href="{{ url_for('eligibility') }}">Zakat Eligibility</a>
         </li>
@@ -67,9 +141,11 @@
     </div>
 </nav>
 
-<!-- MAIN PAGE CONTENT -->
+<!-- MAIN CONTENT -->
+<div class="fade-up">
 {% block content %}
 {% endblock %}
+</div>
 
 <!-- FOOTER -->
 <footer class="footer mt-5 py-4 text-center text-light">

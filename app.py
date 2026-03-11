@@ -1,28 +1,50 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session
 from routes.auth import auth_bp
+from routes.zakat import zakat_bp
 from database.db import get_db, close_db
 from database.models import init_tables
+from services.zakat_service import calculate_zakat
+from flask_wtf.csrf import CSRFProtect
 
-import pickle
 import os
-from cryptography.fernet import Fernet
-import base64
+import pickle
 import io
+import base64
+from datetime import datetime, timedelta, date
+from cryptography.fernet import Fernet
+from dotenv import load_dotenv
+
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
+# -----------------------------
+# LOAD ENV VARIABLES
+# -----------------------------
+load_dotenv()
+
+# -----------------------------
+# APP CONFIG
+# -----------------------------
 app = Flask(__name__)
-app.secret_key = "your-very-secure-secret-key"
+app.secret_key = os.environ.get("FLASK_SECRET_KEY")
+
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='Lax',
+    SESSION_COOKIE_SECURE=False  # True in production (HTTPS)
+)
+
+csrf = CSRFProtect(app)
 
 # -----------------------------
 # REGISTER BLUEPRINTS
 # -----------------------------
 app.register_blueprint(auth_bp)
-
+app.register_blueprint(zakat_bp)
 
 # -----------------------------
-# DATABASE INIT (Flask 3 Safe)
+# DATABASE INIT
 # -----------------------------
 @app.before_request
 def create_tables():
@@ -31,11 +53,9 @@ def create_tables():
         init_tables(db)
         app.db_initialized = True
 
-
 @app.teardown_appcontext
 def shutdown_session(exception=None):
     close_db()
-
 
 # -----------------------------
 # LOAD ML MODEL
@@ -48,39 +68,44 @@ except:
     eligibility_model = None
     print("⚠ WARNING: No ML model found. Running in demo mode.")
 
-
 # -----------------------------
 # ENCRYPTION SETUP
 # -----------------------------
-KEY_PATH = "utils/secret.key"
+FERNET_KEY = os.environ.get("FERNET_KEY")
+if not FERNET_KEY:
+    raise RuntimeError("FERNET_KEY missing in .env")
 
-if os.path.exists(KEY_PATH):
-    with open(KEY_PATH, "rb") as f:
-        key = f.read()
-else:
-    key = Fernet.generate_key()
-    with open(KEY_PATH, "wb") as f:
-        f.write(key)
+cipher = Fernet(FERNET_KEY.encode())
 
-cipher = Fernet(key)
+def encrypt_value(value) -> bytes:
+    return cipher.encrypt(str(value).encode("utf-8"))
 
-def encrypt_value(value):
-    return cipher.encrypt(str(value).encode())
+def decrypt_value(token) -> str:
+    if token is None:
+        return ""
+    if isinstance(token, memoryview):
+        token = token.tobytes()
+    return cipher.decrypt(token).decode("utf-8")
 
-def decrypt_value(token):
-    return cipher.decrypt(token).decode()
-
+def safe_decrypt(token):
+    try:
+        return decrypt_value(token)
+    except Exception:
+        return "[decryption failed]"
 
 # -----------------------------
 # HOME
 # -----------------------------
 @app.route("/")
 def index():
+    return render_template("mission.html")
+
+@app.route("/home")
+def index():
     return render_template("index.html")
 
-
 # -----------------------------
-# DASHBOARD + HISTORY
+# DASHBOARD
 # -----------------------------
 @app.route("/dashboard")
 def dashboard():
@@ -90,55 +115,40 @@ def dashboard():
     db = get_db()
     cur = db.cursor()
 
-    # Load encrypted financial history
+    # Get latest zakat snapshot
     cur.execute("""
-        SELECT income, savings, debts, gold, created_at
-        FROM financial_history
-        WHERE user_id = ?
+        SELECT zakat_due, zakat_due_date
+        FROM zakat_snapshots
+        WHERE user_id = %s
         ORDER BY created_at DESC
+        LIMIT 1
     """, (session["user_id"],))
-    history_rows = cur.fetchall()
 
-    # Decrypt values
-    history = []
-    for row in history_rows:
-        history.append({
-            "income": decrypt_value(row[0]),
-            "savings": decrypt_value(row[1]),
-            "debts": decrypt_value(row[2]),
-            "gold": decrypt_value(row[3]),
-            "created_at": row[4]
-        })
+    snapshot = cur.fetchone()
 
-    # Load Zakat results
-    cur.execute("""
-        SELECT result, explanation, created_at
-        FROM zakat_results
-        WHERE user_id = ?
-        ORDER BY created_at DESC
-    """, (session["user_id"],))
-    results_rows = cur.fetchall()
+    zakat_due = None
+    days_remaining = None
 
-    results = []
-    for row in results_rows:
-        results.append({
-            "result": row[0],
-            "explanation": row[1],
-            "created_at": row[2]
-        })
+    # Safe handling
+    if snapshot and snapshot[0] is not None and snapshot[1] is not None:
+        zakat_due = safe_decrypt(snapshot[0])
+        due_date = snapshot[1]
 
-    # Pair items safely / avoid Jinja errors
-    combined = list(zip(history, results))
+        # Ensure due_date is a date object
+        if hasattr(due_date, "date"):
+            due_date = due_date.date()
+
+        today = date.today()
+        days_remaining = (due_date - today).days
 
     return render_template(
         "dashboard.html",
         username=session["username"],
-        combined=combined
+        zakat_due=zakat_due,
+        days_remaining=days_remaining
     )
-
-
 # -----------------------------
-# ZAKAT ELIGIBILITY (FULL LOGIC)
+# ZAKAT ELIGIBILITY
 # -----------------------------
 @app.route("/eligibility", methods=["GET", "POST"])
 def eligibility():
@@ -146,66 +156,96 @@ def eligibility():
         return redirect(url_for("auth.login"))
 
     result = None
+    breakdown = None
 
     if request.method == "POST":
         try:
-            income = float(request.form["income"])
-            savings = float(request.form["savings"])
-            gold_grams = float(request.form["gold"])
-            debts = float(request.form["debts"])
+            data = {
+                "zakat_rate": 0.025,
+                "nisab_basis": request.form.get("nisab_basis", "gold"),
+                "gold_price_per_gram": float(request.form.get("gold_price_per_gram", 65)),
+                "silver_price_per_gram": float(request.form.get("silver_price_per_gram", 0.75)),
+                "use_metal_weight": True,
 
-            # Encrypt inputs
-            enc_income = encrypt_value(income)
-            enc_savings = encrypt_value(savings)
-            enc_debts = encrypt_value(debts)
-            enc_gold = encrypt_value(gold_grams)
+                # Assets
+                "cash_on_hand": float(request.form.get("cash_on_hand", 0)),
+                "bank_accounts": float(request.form.get("bank_accounts", 0)),
+                "gold_grams": float(request.form.get("gold_grams", 0)),
+                "silver_grams": float(request.form.get("silver_grams", 0)),
+                "stocks": float(request.form.get("stocks", 0)),
+                "investments": float(request.form.get("investments", 0)),
+                "crypto": float(request.form.get("crypto", 0)),
+                "business_inventory": float(request.form.get("business_inventory", 0)),
+                "receivables": float(request.form.get("receivables", 0)),
+                "land_value": float(request.form.get("land_value", 0)),
+
+                # Debts
+                "short_term_debts": float(request.form.get("short_term_debts", 0)),
+                "bills_taxes_due": float(request.form.get("bills_taxes_due", 0)),
+                "business_payables": float(request.form.get("business_payables", 0)),
+            }
+
+            z = calculate_zakat(data)
+
+            result = "Zakat is Required" if z.is_above_nisab else "Zakat is Not Required"
+
+            breakdown = {
+                "assets_total": z.assets_total,
+                "debts_total": z.debts_total,
+                "net_zakatable": z.net_zakatable,
+                "nisab": z.nisab,
+                "zakat_due": z.zakat_due,
+                "nisab_basis": data["nisab_basis"],
+                "zakat_rate": data["zakat_rate"],
+            }
+
+            # Lunar year due date
+            zakat_due_date = datetime.today() + timedelta(days=354)
 
             db = get_db()
             cur = db.cursor()
 
-            # Save financial history
             cur.execute("""
-                INSERT INTO financial_history (user_id, income, savings, debts, gold)
-                VALUES (?, ?, ?, ?, ?)
-            """, (session["user_id"], enc_income, enc_savings, enc_debts, enc_gold))
-            db.commit()
+                INSERT INTO zakat_snapshots (
+                    user_id, assets_total, debts_total, net_zakatable, nisab, zakat_due,
+                    nisab_basis, zakat_rate, zakat_due_date
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (
+                session["user_id"],
+                encrypt_value(z.assets_total),
+                encrypt_value(z.debts_total),
+                encrypt_value(z.net_zakatable),
+                encrypt_value(z.nisab),
+                encrypt_value(z.zakat_due),
+                data["nisab_basis"],
+                data["zakat_rate"],
+                zakat_due_date
+            ))
 
-            # ML model prediction
-            if eligibility_model:
-                features = [[income, savings, gold_grams, debts]]
-                prediction = eligibility_model.predict(features)[0]
-
-                if prediction == 1:
-                    result_text = "Zakat is Required"
-                    explanation = "Your net assets exceed the Nisab threshold."
-                else:
-                    result_text = "Zakat is Not Required"
-                    explanation = "Your wealth does not meet the minimum Nisab level."
-            else:
-                result_text = "ML Model Missing – Demo Only"
-                explanation = "No AI prediction available."
-
-            result = result_text
-
-            # Save Zakat result
-            cur.execute("""
-                INSERT INTO zakat_results (user_id, result, explanation)
-                VALUES (?, ?, ?)
-            """, (session["user_id"], result_text, explanation))
             db.commit()
 
         except Exception as e:
             result = f"Error: {e}"
 
-    return render_template("eligibility.html", result=result)
-
+    return render_template("eligibility.html", result=result, breakdown=breakdown)
 
 # -----------------------------
-# FORECAST GRAPH
+# MISSION
+# -----------------------------
+@app.route("/mission")
+def mission():
+    return render_template("mission.html")
+
+# -----------------------------
+# FORECAST
 # -----------------------------
 @app.route("/forecast", methods=["GET", "POST"])
 def forecast():
-    graph = None
+    graph = False
+    if request.method == "POST":
+        graph = True
+    
 
     if request.method == "POST":
         months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"]
@@ -213,7 +253,7 @@ def forecast():
 
         plt.figure(figsize=(6,4))
         plt.plot(months, income, linewidth=3)
-        plt.title("6-Month AI Forecast", fontsize=14)
+        plt.title("6-Month AI Forecast")
         plt.xlabel("Month")
         plt.ylabel("Income (€)")
 
@@ -224,9 +264,8 @@ def forecast():
 
     return render_template("forecast.html", graph=graph)
 
-
 # -----------------------------
-# DONATION PAGE (DEMO)
+# DONATE
 # -----------------------------
 @app.route("/donate", methods=["GET", "POST"])
 def donate():
@@ -235,11 +274,9 @@ def donate():
     if request.method == "POST":
         charity = request.form.get("charity")
         amount = request.form.get("amount")
-
         confirmation = f"You successfully donated €{amount} to {charity} (Demo Mode)."
 
     return render_template("donate.html", confirmation=confirmation)
-
 
 # -----------------------------
 # LOGOUT
@@ -248,7 +285,6 @@ def donate():
 def logout():
     session.clear()
     return redirect(url_for("auth.login"))
-
 
 if __name__ == "__main__":
     app.run(debug=True)
