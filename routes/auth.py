@@ -24,7 +24,7 @@ def register():
         cur = db.cursor()
 
         try:
-            cur.execute("INSERT INTO users (username, password) VALUES (?, ?)",
+            cur.execute("INSERT INTO users (username, password) VALUES (%s, %s)",
                         (username, hashed_pw))
             db.commit()
         except:
@@ -47,7 +47,7 @@ def login():
 
         db = get_db()
         cur = db.cursor()
-        cur.execute("SELECT id, username, password FROM users WHERE username = ?", (username,))
+        cur.execute("SELECT id, username, password FROM users WHERE username = %s", (username,))
         user = cur.fetchone()
 
         if user and check_password_hash(user[2], password):

@@ -1,15 +1,18 @@
-import sqlite3
+import os
+import psycopg2
 from flask import g
+from dotenv import load_dotenv
 
-DATABASE = "database/zakaatiq.db"
+load_dotenv()
+
+DATABASE_URL = os.environ.get("DATABASE_URL")
 
 def get_db():
-    db = getattr(g, '_database', None)
-    if db is None:
-        db = g._database = sqlite3.connect(DATABASE)
-    return db
+    if 'db' not in g:
+        g.db = psycopg2.connect(DATABASE_URL)
+    return g.db
 
 def close_db(e=None):
-    db = getattr(g, '_database', None)
+    db = g.pop('db', None)
     if db is not None:
         db.close()
