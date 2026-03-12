@@ -113,44 +113,94 @@ def dashboard():
     db = get_db()
     cur = db.cursor()
 
-    # latest zakat calculation
+    # -----------------------------
+    # Latest zakat snapshot
+    # -----------------------------
     cur.execute("""
         SELECT zakat_due, zakat_due_date
         FROM zakat_snapshots
         WHERE user_id = %s
         ORDER BY created_at DESC
         LIMIT 1
-    """,(session["user_id"],))
+    """, (session["user_id"],))
 
     snapshot = cur.fetchone()
 
-    zakat_due = 0
+    zakat_due = 0.0
     days_remaining = None
 
-    if snapshot:
+    if snapshot and snapshot[0] is not None:
         zakat_due = float(safe_decrypt(snapshot[0]))
+
         due_date = snapshot[1]
+        if due_date is not None:
+            if hasattr(due_date, "date"):
+                due_date = due_date.date()
 
-        if hasattr(due_date,"date"):
-            due_date = due_date.date()
+            days_remaining = (due_date - date.today()).days
 
-        days_remaining = (due_date - date.today()).days
-
-    # total donated this year
+    # -----------------------------
+    # Total donated this year
+    # -----------------------------
     cur.execute("""
-        SELECT COALESCE(SUM(amount),0)
+        SELECT COALESCE(SUM(amount), 0)
         FROM donations
         WHERE user_id = %s
-        AND DATE_PART('year', created_at)=DATE_PART('year', CURRENT_DATE)
-    """,(session["user_id"],))
+        AND DATE_PART('year', created_at) = DATE_PART('year', CURRENT_DATE)
+    """, (session["user_id"],))
 
     donated = cur.fetchone()[0]
+    donated = float(donated or 0)
 
     remaining_zakat = zakat_due - donated
     if remaining_zakat < 0:
-        remaining_zakat = 0
+        remaining_zakat = 0.0
 
-    monthly_recommendation = round(zakat_due/12,2) if zakat_due else 0
+    monthly_recommendation = round(zakat_due / 12, 2) if zakat_due else 0.0
+
+    # -----------------------------
+    # Load encrypted financial history
+    # -----------------------------
+    cur.execute("""
+        SELECT income, savings, debts, gold, created_at
+        FROM financial_history
+        WHERE user_id = %s
+        ORDER BY created_at DESC
+    """, (session["user_id"],))
+
+    history_rows = cur.fetchall()
+
+    history = []
+    for row in history_rows:
+        history.append({
+            "income": safe_decrypt(row[0]),
+            "savings": safe_decrypt(row[1]),
+            "debts": safe_decrypt(row[2]),
+            "gold": safe_decrypt(row[3]),
+            "created_at": row[4]
+        })
+
+    # -----------------------------
+    # Load zakat result history
+    # -----------------------------
+    cur.execute("""
+        SELECT result, explanation, created_at
+        FROM zakat_results
+        WHERE user_id = %s
+        ORDER BY created_at DESC
+    """, (session["user_id"],))
+
+    results_rows = cur.fetchall()
+
+    results = []
+    for row in results_rows:
+        results.append({
+            "result": row[0],
+            "explanation": row[1],
+            "created_at": row[2]
+        })
+
+    combined = list(zip(history, results))
 
     return render_template(
         "dashboard.html",
@@ -159,7 +209,8 @@ def dashboard():
         donated=donated,
         remaining_zakat=remaining_zakat,
         monthly_recommendation=monthly_recommendation,
-        days_remaining=days_remaining
+        days_remaining=days_remaining,
+        combined=combined
     )
 
 # -----------------------------
@@ -178,28 +229,28 @@ def eligibility():
 
         try:
 
-            data={
+            data = {
+
                 "zakat_rate":0.025,
                 "nisab_basis":request.form.get("nisab_basis","gold"),
-                "gold_price_per_gram":float(request.form.get("gold_price_per_gram",65)),
-                "silver_price_per_gram":float(request.form.get("silver_price_per_gram",0.75)),
+                "gold_price_per_gram":float(request.form.get("gold_price_per_gram") or 65),
+                "silver_price_per_gram":float(request.form.get("silver_price_per_gram") or 0.75),
 
-                "cash_on_hand":float(request.form.get("cash_on_hand",0)),
-                "bank_accounts":float(request.form.get("bank_accounts",0)),
-                "gold_grams":float(request.form.get("gold_grams",0)),
-                "silver_grams":float(request.form.get("silver_grams",0)),
-                "stocks":float(request.form.get("stocks",0)),
-                "investments":float(request.form.get("investments",0)),
-                "crypto":float(request.form.get("crypto",0)),
-                "business_inventory":float(request.form.get("business_inventory",0)),
-                "receivables":float(request.form.get("receivables",0)),
-                "land_value":float(request.form.get("land_value",0)),
+                "cash_on_hand":float(request.form.get("cash_on_hand") or 0),
+                "bank_accounts":float(request.form.get("bank_accounts") or 0),
+                "gold_grams":float(request.form.get("gold_grams") or 0),
+                "silver_grams":float(request.form.get("silver_grams") or 0),
+                "stocks":float(request.form.get("stocks") or 0),
+                "investments":float(request.form.get("investments") or 0),
+                "crypto":float(request.form.get("crypto") or 0),
+                "business_inventory":float(request.form.get("business_inventory") or 0),
+                "receivables":float(request.form.get("receivables") or 0),
+                "land_value":float(request.form.get("land_value") or 0),
 
-                "short_term_debts":float(request.form.get("short_term_debts",0)),
-                "bills_taxes_due":float(request.form.get("bills_taxes_due",0)),
-                "business_payables":float(request.form.get("business_payables",0)),
+                "short_term_debts":float(request.form.get("short_term_debts") or 0),
+                "bills_taxes_due":float(request.form.get("bills_taxes_due") or 0),
+                "business_payables":float(request.form.get("business_payables") or 0),
             }
-
             z=calculate_zakat(data)
 
             result="Zakat is Required" if z.is_above_nisab else "Zakat is Not Required"
