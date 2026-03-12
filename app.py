@@ -295,28 +295,39 @@ def eligibility():
 # -----------------------------
 # FORECAST
 # -----------------------------
-@app.route("/forecast",methods=["GET","POST"])
+@app.route("/forecast", methods=["GET","POST"])
 def forecast():
 
-    graph=False
+    if "user_id" not in session:
+        return redirect(url_for("auth.login"))
+
+    labels=[]
+    income=[]
 
     if request.method=="POST":
 
-        months=["Jan","Feb","Mar","Apr","May","Jun"]
-        income=[2000,2100,2200,2300,2400,2550]
+        db=get_db()
+        cur=db.cursor()
 
-        plt.figure(figsize=(6,4))
-        plt.plot(months,income)
-        plt.title("6 Month Income Forecast")
+        cur.execute("""
+        SELECT created_at, income
+        FROM financial_history
+        WHERE user_id=%s
+        ORDER BY created_at ASC
+        LIMIT 6
+        """,(session["user_id"],))
 
-        png=io.BytesIO()
-        plt.savefig(png,format="png")
-        png.seek(0)
+        rows=cur.fetchall()
 
-        graph=base64.b64encode(png.getvalue()).decode()
+        for r in rows:
+            labels.append(r[0].strftime("%b %Y"))
+            income.append(float(safe_decrypt(r[1])))
 
-    return render_template("forecast.html",graph=graph)
-
+    return render_template(
+        "forecast.html",
+        labels=labels,
+        income=income
+    )
 # -----------------------------
 # DONATIONS
 # -----------------------------
