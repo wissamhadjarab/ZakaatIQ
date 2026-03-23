@@ -8,16 +8,10 @@ from flask_wtf.csrf import CSRFProtect
 
 import os
 import pickle
-import io
-import base64
 import uuid
 from datetime import datetime, timedelta, date
 from cryptography.fernet import Fernet
 from dotenv import load_dotenv
-
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
 
 # -----------------------------
 # LOAD ENV VARIABLES
@@ -107,6 +101,7 @@ def home():
 # -----------------------------
 @app.route("/dashboard")
 def dashboard():
+
     if "user_id" not in session:
         return redirect(url_for("auth.login"))
 
@@ -119,54 +114,68 @@ def dashboard():
     cur.execute("""
         SELECT zakat_due, zakat_due_date
         FROM zakat_snapshots
-        WHERE user_id = %s
+        WHERE user_id=%s
         ORDER BY created_at DESC
         LIMIT 1
-    """, (session["user_id"],))
+    """,(session["user_id"],))
 
     snapshot = cur.fetchone()
 
-    zakat_due = 0.0
+    zakat_due = 0
     days_remaining = None
 
-    if snapshot and snapshot[0] is not None:
+    if snapshot and snapshot[0]:
         zakat_due = float(safe_decrypt(snapshot[0]))
 
         due_date = snapshot[1]
-        if due_date is not None:
-            if hasattr(due_date, "date"):
-                due_date = due_date.date()
+        if hasattr(due_date, "date"):
+            due_date = due_date.date()
 
-            days_remaining = (due_date - date.today()).days
+        days_remaining = (due_date - date.today()).days
 
     # -----------------------------
-    # Total donated this year
+    # Reminder
+    # -----------------------------
+    reminder_message = None
+
+    if snapshot:
+        due_date = snapshot[1]
+
+        if hasattr(due_date, "date"):
+            due_date = due_date.date()
+
+        days_left = (due_date - date.today()).days
+
+        if days_left <= 30:
+            reminder_message = f"Reminder: Your Zakat is due in {days_left} days"
+
+    # -----------------------------
+    # Donations
     # -----------------------------
     cur.execute("""
-        SELECT COALESCE(SUM(amount), 0)
+        SELECT COALESCE(SUM(amount),0)
         FROM donations
-        WHERE user_id = %s
-        AND DATE_PART('year', created_at) = DATE_PART('year', CURRENT_DATE)
-    """, (session["user_id"],))
+        WHERE user_id=%s
+        AND DATE_PART('year',created_at)=DATE_PART('year',CURRENT_DATE)
+    """,(session["user_id"],))
 
-    donated = cur.fetchone()[0]
-    donated = float(donated or 0)
+    donated = float(cur.fetchone()[0] or 0)
 
     remaining_zakat = zakat_due - donated
     if remaining_zakat < 0:
-        remaining_zakat = 0.0
+        remaining_zakat = 0
 
-    monthly_recommendation = round(zakat_due / 12, 2) if zakat_due else 0.0
+    monthly_recommendation = round(zakat_due / 12, 2) if zakat_due else 0
 
     # -----------------------------
-    # Load encrypted financial history
+    # Financial history
     # -----------------------------
     cur.execute("""
-        SELECT income, savings, debts, gold, created_at
+        SELECT income,savings,debts,gold,created_at
         FROM financial_history
-        WHERE user_id = %s
+        WHERE user_id=%s
         ORDER BY created_at DESC
-    """, (session["user_id"],))
+    """,(session["user_id"],))
 
     history_rows = cur.fetchall()
 
@@ -181,14 +190,14 @@ def dashboard():
         })
 
     # -----------------------------
-    # Load zakat result history
+    # Zakat result history
     # -----------------------------
     cur.execute("""
-        SELECT result, explanation, created_at
+        SELECT result,explanation,created_at
         FROM zakat_results
-        WHERE user_id = %s
+        WHERE user_id=%s
         ORDER BY created_at DESC
-    """, (session["user_id"],))
+    """,(session["user_id"],))
 
     results_rows = cur.fetchall()
 
@@ -202,6 +211,40 @@ def dashboard():
 
     combined = list(zip(history, results))
 
+    # -----------------------------
+    # AI ZAKAT PREDICTION
+    # -----------------------------
+    cur.execute("""
+    SELECT created_at, income
+    FROM financial_history
+    WHERE user_id = %s
+    ORDER BY created_at ASC
+    """,(session["user_id"],))
+
+    rows = cur.fetchall()
+
+    predicted_next_zakat = None
+
+    if len(rows) >= 2:
+
+        incomes = [float(safe_decrypt(r[1])) for r in rows]
+
+        growth_rates = []
+
+        for i in range(1, len(incomes)):
+            if incomes[i-1] > 0:
+                growth = (incomes[i] - incomes[i-1]) / incomes[i-1]
+                growth_rates.append(growth)
+
+        if growth_rates:
+            avg_growth = sum(growth_rates) / len(growth_rates)
+
+            predicted_income = incomes[-1] * (1 + avg_growth)
+
+            predicted_wealth = predicted_income * 12 * 0.2
+
+            predicted_next_zakat = round(predicted_wealth * 0.025, 2)
+
     return render_template(
         "dashboard.html",
         username=session["username"],
@@ -210,13 +253,15 @@ def dashboard():
         remaining_zakat=remaining_zakat,
         monthly_recommendation=monthly_recommendation,
         days_remaining=days_remaining,
+        reminder_message=reminder_message,
+        predicted_next_zakat=predicted_next_zakat,
         combined=combined
     )
 
 # -----------------------------
 # ZAKAT CALCULATOR
 # -----------------------------
-@app.route("/eligibility", methods=["GET","POST"])
+@app.route("/eligibility",methods=["GET","POST"])
 def eligibility():
 
     if "user_id" not in session:
@@ -229,7 +274,7 @@ def eligibility():
 
         try:
 
-            data = {
+            data={
 
                 "zakat_rate":0.025,
                 "nisab_basis":request.form.get("nisab_basis","gold"),
@@ -251,6 +296,7 @@ def eligibility():
                 "bills_taxes_due":float(request.form.get("bills_taxes_due") or 0),
                 "business_payables":float(request.form.get("business_payables") or 0),
             }
+
             z=calculate_zakat(data)
 
             result="Zakat is Required" if z.is_above_nisab else "Zakat is Not Required"
@@ -269,10 +315,10 @@ def eligibility():
             cur=db.cursor()
 
             cur.execute("""
-                INSERT INTO zakat_snapshots
-                (user_id,assets_total,debts_total,net_zakatable,nisab,zakat_due,
-                nisab_basis,zakat_rate,zakat_due_date)
-                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
+            INSERT INTO zakat_snapshots
+            (user_id,assets_total,debts_total,net_zakatable,nisab,zakat_due,
+            nisab_basis,zakat_rate,zakat_due_date)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
             """,(
                 session["user_id"],
                 encrypt_value(z.assets_total),
@@ -285,6 +331,28 @@ def eligibility():
                 zakat_due_date
             ))
 
+            cur.execute("""
+            INSERT INTO financial_history
+            (user_id,income,savings,debts,gold)
+            VALUES (%s,%s,%s,%s,%s)
+            """,(
+                session["user_id"],
+                encrypt_value(data["cash_on_hand"]),
+                encrypt_value(data["bank_accounts"]),
+                encrypt_value(data["short_term_debts"]),
+                encrypt_value(data["gold_grams"])
+            ))
+
+            cur.execute("""
+            INSERT INTO zakat_results
+            (user_id,result,explanation)
+            VALUES (%s,%s,%s)
+            """,(
+                session["user_id"],
+                result,
+                f"Net zakatable wealth: {round(z.net_zakatable,2)}"
+            ))
+
             db.commit()
 
         except Exception as e:
@@ -295,7 +363,7 @@ def eligibility():
 # -----------------------------
 # FORECAST
 # -----------------------------
-@app.route("/forecast", methods=["GET","POST"])
+@app.route("/forecast",methods=["GET","POST"])
 def forecast():
 
     if "user_id" not in session:
@@ -310,11 +378,10 @@ def forecast():
         cur=db.cursor()
 
         cur.execute("""
-        SELECT created_at, income
+        SELECT created_at,income
         FROM financial_history
         WHERE user_id=%s
         ORDER BY created_at ASC
-        LIMIT 6
         """,(session["user_id"],))
 
         rows=cur.fetchall()
@@ -323,13 +390,21 @@ def forecast():
             labels.append(r[0].strftime("%b %Y"))
             income.append(float(safe_decrypt(r[1])))
 
-    return render_template(
-        "forecast.html",
-        labels=labels,
-        income=income
-    )
+        # AI growth
+        if len(income)>0:
+            last=income[-1]
+
+            for i in range(1,6):
+                future=(last*(1+0.05*i))
+                income.append(round(future,2))
+
+                future_date=datetime.today()+timedelta(days=30*i)
+                labels.append(future_date.strftime("%b %Y"))
+
+    return render_template("forecast.html",labels=labels,income=income)
+
 # -----------------------------
-# DONATIONS
+# DONATE
 # -----------------------------
 @app.route("/donate",methods=["GET","POST"])
 def donate():
@@ -341,44 +416,66 @@ def donate():
     cur=db.cursor()
 
     cur.execute("""
-        SELECT id,name,description
-        FROM charities
-        WHERE approved=TRUE
-        ORDER BY name
+    SELECT id,name,description
+    FROM charities
+    WHERE approved=TRUE
     """)
 
     charities=cur.fetchall()
     confirmation=None
 
     if request.method=="POST":
+        charity_id = request.form.get("charity")
+        amount = float(request.form.get("amount"))
+        payment_type = request.form.get("payment_type")
 
-        charity_id=request.form.get("charity")
-        amount=float(request.form.get("amount"))
-        payment_type=request.form.get("payment_type")
-
-        payment_reference=f"STRIPE-DEMO-{uuid.uuid4().hex[:8]}"
-
-        cur.execute("""
-            INSERT INTO donations
-            (user_id,charity_id,amount,payment_type,payment_reference)
-            VALUES (%s,%s,%s,%s,%s)
-        """,(
-            session["user_id"],
-            charity_id,
-            amount,
-            payment_type,
-            payment_reference
-        ))
+            # store temporarily in session
+        session["pending_donation"] = {
+                "charity_id": charity_id,
+                "amount": amount,
+                "payment_type": payment_type
+            }
 
         db.commit()
 
-        confirmation=f"Payment successful. €{amount} donated."
+        confirmation=f"€{amount} donated successfully."
 
-    return render_template(
-        "donate.html",
-        charities=charities,
-        confirmation=confirmation
-    )
+    return render_template("donate.html",charities=charities,confirmation=confirmation)
+
+@app.route("/payment-success")
+def payment_success():
+
+    if "user_id" not in session:
+        return redirect(url_for("auth.login"))
+
+    pending = session.get("pending_donation")
+
+    if not pending:
+        return redirect(url_for("dashboard"))
+
+    db = get_db()
+    cur = db.cursor()
+
+    ref = f"STRIPE-SIM-{uuid.uuid4().hex[:8]}"
+
+    cur.execute("""
+        INSERT INTO donations
+        (user_id, charity_id, amount, payment_type, payment_reference)
+        VALUES (%s,%s,%s,%s,%s)
+    """,(
+        session["user_id"],
+        pending["charity_id"],
+        pending["amount"],
+        pending["payment_type"],
+        ref
+    ))
+
+    db.commit()
+
+    # clear session
+    session.pop("pending_donation", None)
+
+    return render_template("payment_success.html", amount=pending["amount"])
 
 # -----------------------------
 # LOGOUT
