@@ -1,54 +1,211 @@
 {% extends "base.html" %}
 {% block content %}
 
+<!-- HERO -->
+<section class="hero-section d-flex align-items-center justify-content-center">
+
+    <div class="hero-overlay">
+        <div class="hero-content text-center text-white">
+
+            <h1 style="font-size:70px; font-weight:900;">
+                ZakaatIQ
+            </h1>
+
+            <h2 style="font-size:32px; font-weight:700;" class="mb-4">
+                Understand, Calculate and Fulfil Your Zakat
+            </h2>
+
+            <p style="font-size:20px; max-width:700px; margin:auto;" class="mb-4">
+                Learn about Zakat, understand Nisab, and manage your charitable obligations 
+                through a secure and intelligent platform.
+            </p>
+
+            <!-- FIXED BUTTON GROUP -->
+            <div class="homepage-btn-container">
+
+                <a href="{{ url_for('eligibility') }}" class="homepage-btn">
+                    Calculate Zakat
+                </a>
+
+                <a href="{{ url_for('home') }}" class="homepage-btn">
+                    Go to Home
+                </a>
+
+            </div>
+
+        </div>
+    </div>
+
+</section>
+
+<!-- WHAT IS ZAKAT -->
 <div class="container py-5">
+<div class="row align-items-center g-5">
 
+<div class="col-md-6">
+    <h2 class="gold-text fw-bold mb-3" style="font-size:42px;">
+        What is Zakat?
+    </h2>
+
+    <p class="text-muted" style="font-size:20px;">
+        Zakat is one of the five pillars of Islam and is a mandatory charitable contribution 
+        for eligible Muslims. It requires giving 2.5% of one's qualifying wealth annually 
+        to those in need.
+    </p>
+
+    <p class="text-muted" style="font-size:20px;">
+        It purifies wealth, supports the less fortunate, and strengthens community bonds.
+    </p>
+</div>
+
+<div class="col-md-6">
+    <img src="/static/images/charity_help.jpg"
+         class="img-fluid rounded shadow"
+         style="height:400px; width:100%; object-fit:cover;">
+</div>
+
+</div>
+</div>
+
+<!-- WHAT IS NISAB -->
+<div class="container py-5">
+<div class="row align-items-center flex-md-row-reverse g-5">
+
+<div class="col-md-6">
+    <h2 class="gold-text fw-bold mb-3" style="font-size:42px;">
+        What is Nisab?
+    </h2>
+
+    <p class="text-muted" style="font-size:20px;">
+        Nisab is the minimum amount of wealth a Muslim must possess before they are required 
+        to pay Zakat. It is calculated based on the value of gold or silver.
+    </p>
+
+    <p class="text-muted" style="font-size:20px;">
+        If your total wealth exceeds this threshold for a full lunar year, Zakat becomes obligatory.
+    </p>
+</div>
+
+<div class="col-md-6">
+    <img src="/static/images/community.jpg"
+         class="img-fluid rounded shadow"
+         style="height:400px; width:100%; object-fit:cover;">
+</div>
+
+</div>
+</div>
+
+<!-- 🤖 AI SECTION (NEW) -->
+<div class="container py-5">
+<div class="row align-items-center g-5">
+
+<div class="col-md-6">
+    <h2 class="gold-text fw-bold mb-3" style="font-size:42px;">
+        AI & Smart Insights
+    </h2>
+
+    <p class="text-muted" style="font-size:20px;">
+        ZakaatIQ uses intelligent data analysis to help you better understand your financial situation 
+        and Zakat obligations.
+    </p>
+
+    <p class="text-muted" style="font-size:20px;">
+        The system analyses your financial inputs and provides personalised insights, including 
+        future projections of your savings based on your habits.
+    </p>
+
+    <p class="text-muted" style="font-size:20px;">
+        While not a fully advanced AI system, it applies simplified machine learning concepts 
+        to assist with smarter financial decision-making.
+    </p>
+</div>
+
+<div class="col-md-6">
+    <img src="/static/images/different-people-doing-volunteer-work.jpg"
+         class="img-fluid rounded shadow"
+         style="height:400px; width:100%; object-fit:cover;">
+</div>
+
+</div>
+</div>
+
+<!-- HOW IT WORKS -->
+<div class="container py-5">
 <div class="text-center mb-5">
-
-<h2 class="gold-text fw-bold">Our Mission</h2>
-
-<p class="lead">
-Empowering Muslims to fulfil their Zakat obligations with clarity, security and trust.
-</p>
-
+    <h2 class="gold-text fw-bold" style="font-size:48px;">
+        How ZakaatIQ Works
+    </h2>
 </div>
 
-<div class="row justify-content-center">
+<div class="row g-4 text-center">
 
-<div class="col-lg-8">
-
-<div class="dashboard-card">
-
-<p>
-ZakaatIQ was created to help Muslims accurately calculate and manage their Zakat obligations using modern financial technology.
+<div class="col-md-4">
+<div class="dashboard-card p-4">
+<h5 class="fw-bold" style="font-size:22px;">1. Enter Your Wealth</h5>
+<p class="text-muted" style="font-size:18px;">
+Input your savings, assets, and debts using our guided calculator.
 </p>
-
-<p>
-Many Muslims struggle to determine whether their wealth meets the Nisab threshold or how much Zakat they should pay. ZakaatIQ simplifies this process through a secure and transparent platform.
-</p>
-
-<p>
-Our system combines financial tools, forecasting models, and verified charity recommendations to support Muslims in fulfilling one of the core pillars of Islam.
-</p>
-
-<p>
-By integrating ethical financial guidance with secure technology, ZakaatIQ aims to make Zakat calculation more accessible and trustworthy for the global Muslim community.
-</p>
-
+</div>
 </div>
 
+<div class="col-md-4">
+<div class="dashboard-card p-4">
+<h5 class="fw-bold" style="font-size:22px;">2. Calculate Zakat</h5>
+<p class="text-muted" style="font-size:18px;">
+We automatically calculate your Zakat based on Islamic principles.
+</p>
+</div>
 </div>
 
+<div class="col-md-4">
+<div class="dashboard-card p-4">
+<h5 class="fw-bold" style="font-size:22px;">3. Donate Securely</h5>
+<p class="text-muted" style="font-size:18px;">
+Choose verified charities and track your Zakat payments.
+</p>
+</div>
 </div>
 
 </div>
+</div>
 
-<div class="text-center mt-4">
+<!-- WHY USE -->
+<div class="container py-5">
+<div class="row align-items-center g-5">
 
-<a href="{{ url_for('home') }}" class="btn btn-warning px-5 py-3 fw-bold">
-Enter ZakaatIQ
-</a>
+<div class="col-md-6">
+    <h2 class="gold-text fw-bold mb-3" style="font-size:42px;">
+        Why Use ZakaatIQ?
+    </h2>
 
+    <ul class="text-muted" style="font-size:20px;">
+        <li>Accurate Zakat calculations</li>
+        <li>Secure donation tracking</li>
+        <li>Verified charities only</li>
+        <li>AI-powered insights</li>
+        <li>User-friendly interface</li>
+    </ul>
+</div>
+
+<div class="col-md-6">
+    <img src="/static/images/donation.jpg"
+         class="img-fluid rounded shadow"
+         style="height:400px; width:100%; object-fit:cover;">
+</div>
+
+</div>
+</div>
+
+<!-- CTA -->
+<div class="text-center py-5" style="background:#f8f9fa;">
+    <h3 class="fw-bold" style="font-size:34px;">
+        Start Your Zakat Journey Today
+    </h3>
+
+    <a href="{{ url_for('eligibility') }}" 
+       class="btn btn-warning mt-3 px-5 py-3 fw-bold">
+        Calculate Now
+    </a>
 </div>
 
 {% endblock %}

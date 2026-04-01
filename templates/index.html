@@ -6,44 +6,66 @@
     <div class="hero-overlay">
         <div class="hero-content text-center">
 
+            <!-- Arabic -->
             <h1 class="hero-arabic">زكاة الذكاء</h1>
 
-            <h2 class="hero-title mb-4">ZakaatIQ – Smart Islamic Finance Assistant</h2>
+            <!-- Title -->
+            <h2 class="hero-title mb-4">
+                ZakaatIQ – Smart Islamic Finance Assistant
+            </h2>
 
+            <!-- Verse -->
             <p class="hero-translation mb-4">
                 “Take from their wealth a charity by which you purify them and elevate them.”
                 <br>— Surah At-Tawbah (9:103)
             </p>
 
-            <!-- BUTTON GROUP -->
+            <!-- BUTTONS WITH HOVER INFO -->
             <div class="homepage-btn-container">
 
-                <a href="{{ url_for('eligibility') }}" class="homepage-btn">
-                    Zakat Eligibility
-                </a>
+                <div class="btn-wrapper">
+                    <a href="{{ url_for('eligibility') }}" class="homepage-btn">
+                        Zakat Eligibility
+                    </a>
+                    <span class="btn-info">Check if you need to pay Zakat</span>
+                </div>
 
-                <a href="{{ url_for('forecast') }}" class="homepage-btn">
-                    AI Forecast
-                </a>
+                <div class="btn-wrapper">
+                    <a href="{{ url_for('forecast') }}" class="homepage-btn">
+                        AI Forecast
+                    </a>
+                    <span class="btn-info">Predict your future Zakat obligations</span>
+                </div>
 
-                <a href="{{ url_for('donate') }}" class="homepage-btn">
-                    Donate
-                </a>
+                <div class="btn-wrapper">
+                    <a href="{{ url_for('donate') }}" class="homepage-btn">
+                        Donate
+                    </a>
+                    <span class="btn-info">Donate securely to verified charities</span>
+                </div>
 
                 {% if 'user_id' in session %}
-                <a href="{{ url_for('dashboard') }}" class="homepage-btn">
-                    Go to Dashboard
-                </a>
+                <div class="btn-wrapper">
+                    <a href="{{ url_for('dashboard') }}" class="homepage-btn">
+                        Dashboard
+                    </a>
+                    <span class="btn-info">View your Zakat summary and progress</span>
+                </div>
                 {% endif %}
 
+                <div class="btn-wrapper">
+                    <a href="{{ url_for('auth.login') }}" class="homepage-btn">
+                        Login
+                    </a>
+                    <span class="btn-info">Access your account</span>
+                </div>
 
-                <a href="{{ url_for('auth.login') }}" class="homepage-btn">
-                    Login
-                </a>
-
-                <a href="{{ url_for('auth.register') }}" class="homepage-btn">
-                    Register
-                </a>
+                <div class="btn-wrapper">
+                    <a href="{{ url_for('auth.register') }}" class="homepage-btn">
+                        Register
+                    </a>
+                    <span class="btn-info">Create a new account</span>
+                </div>
 
             </div>
 

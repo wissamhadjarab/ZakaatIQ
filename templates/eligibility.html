@@ -3,189 +3,175 @@
 
 <div class="container py-5">
 
-<!-- PAGE HEADER -->
+<!-- HEADER -->
 <div class="text-center mb-5">
     <h2 class="gold-text fw-bold">Zakat Eligibility Calculator</h2>
     <p class="text-muted">
-        Enter your financial details to determine whether Zakat is required.
+        Enter your financial details below. Zakat is calculated on your total wealth (not income).
     </p>
 </div>
 
-
 <form method="POST">
-
 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-<div class="row g-4">
-
-<!-- CASH -->
-<div class="col-md-6">
-<div class="dashboard-card">
-
+<!-- ========================= -->
+<!-- CASH & SAVINGS -->
+<!-- ========================= -->
+<div class="dashboard-card mb-4">
 <h5 class="gold-text mb-3">Cash & Bank</h5>
 
-<div class="mb-3">
-<label class="form-label">Cash on Hand (€)</label>
+<div class="row">
+<div class="col-md-4 mb-3">
+<label>Cash on Hand (€)</label>
 <input type="number" step="0.01" name="cash_on_hand" class="form-control">
 </div>
 
-<div class="mb-3">
-<label class="form-label">Bank Accounts (€)</label>
+<div class="col-md-4 mb-3">
+<label>Bank Accounts (€)</label>
 <input type="number" step="0.01" name="bank_accounts" class="form-control">
 </div>
 
+<div class="col-md-4 mb-3">
+<label>Monthly Savings (€)</label>
+<input type="number" step="0.01" name="monthly_savings" class="form-control">
+<small class="text-muted">Used for forecasting only</small>
 </div>
 </div>
 
+</div>
 
 <!-- PRECIOUS METALS -->
-<div class="col-md-6">
-<div class="dashboard-card">
-
+<div class="dashboard-card mb-4">
 <h5 class="gold-text mb-3">Precious Metals</h5>
 
-<div class="mb-3">
-<label class="form-label">Gold (grams)</label>
+<div class="row">
+<div class="col-md-6 mb-3">
+<label>Gold (grams)</label>
 <input type="number" step="0.01" name="gold_grams" class="form-control">
 </div>
 
-<div class="mb-3">
-<label class="form-label">Silver (grams)</label>
+<div class="col-md-6 mb-3">
+<label>Silver (grams)</label>
 <input type="number" step="0.01" name="silver_grams" class="form-control">
 </div>
-
-</div>
 </div>
 
+</div>
 
 <!-- INVESTMENTS -->
-<div class="col-md-6">
-<div class="dashboard-card">
-
+<div class="dashboard-card mb-4">
 <h5 class="gold-text mb-3">Investments</h5>
 
-<div class="mb-3">
-<label class="form-label">Stocks (€)</label>
+<div class="row">
+<div class="col-md-4 mb-3">
+<label>Stocks (€)</label>
 <input type="number" step="0.01" name="stocks" class="form-control">
 </div>
 
-<div class="mb-3">
-<label class="form-label">Crypto (€)</label>
+<div class="col-md-4 mb-3">
+<label>Crypto (€)</label>
 <input type="number" step="0.01" name="crypto" class="form-control">
 </div>
 
-<div class="mb-3">
-<label class="form-label">Other Investments (€)</label>
+<div class="col-md-4 mb-3">
+<label>Other Investments (€)</label>
 <input type="number" step="0.01" name="investments" class="form-control">
 </div>
-
-</div>
 </div>
 
+</div>
 
-<!-- BUSINESS ASSETS -->
-<div class="col-md-6">
-<div class="dashboard-card">
-
+<!-- BUSINESS -->
+<div class="dashboard-card mb-4">
 <h5 class="gold-text mb-3">Business Assets</h5>
 
-<div class="mb-3">
-<label class="form-label">Business Inventory (€)</label>
+<div class="row">
+<div class="col-md-4 mb-3">
+<label>Inventory (€)</label>
 <input type="number" step="0.01" name="business_inventory" class="form-control">
 </div>
 
-<div class="mb-3">
-<label class="form-label">Receivables (€)</label>
+<div class="col-md-4 mb-3">
+<label>Receivables (€)</label>
 <input type="number" step="0.01" name="receivables" class="form-control">
 </div>
 
-<div class="mb-3">
-<label class="form-label">Land Value (€)</label>
+<div class="col-md-4 mb-3">
+<label>Land Value (€)</label>
 <input type="number" step="0.01" name="land_value" class="form-control">
 </div>
-
-</div>
 </div>
 
+</div>
 
 <!-- DEBTS -->
-<div class="col-md-12">
-<div class="dashboard-card">
-
+<div class="dashboard-card mb-4">
 <h5 class="gold-text mb-3">Debts & Liabilities</h5>
 
 <div class="row">
-
 <div class="col-md-4 mb-3">
-<label class="form-label">Short Term Debts (€)</label>
+<label>Short Term Debts (€)</label>
 <input type="number" step="0.01" name="short_term_debts" class="form-control">
 </div>
 
 <div class="col-md-4 mb-3">
-<label class="form-label">Bills & Taxes Due (€)</label>
+<label>Bills & Taxes (€)</label>
 <input type="number" step="0.01" name="bills_taxes_due" class="form-control">
 </div>
 
 <div class="col-md-4 mb-3">
-<label class="form-label">Business Payables (€)</label>
+<label>Business Payables (€)</label>
 <input type="number" step="0.01" name="business_payables" class="form-control">
 </div>
-
-</div>
-
-</div>
 </div>
 
 </div>
 
-
-<!-- SUBMIT BUTTON -->
-<div class="text-center mt-5">
-
+<!-- BUTTON -->
+<div class="text-center mt-4">
 <button class="btn btn-warning px-5 py-3 fw-bold">
 Calculate Zakat
 </button>
-
 </div>
 
 </form>
 
-
 <!-- RESULT -->
 {% if result %}
-
-<div class="row justify-content-center mt-5">
-
-<div class="col-lg-8">
+<div id="result-section" class="mt-5">
 
 <div class="dashboard-card text-center">
-
 <h4 class="gold-text">Eligibility Result</h4>
-
 <h2 class="mt-3">{{ result }}</h2>
 
 {% if breakdown %}
-
 <div class="mt-4 text-start">
-
 <p><strong>Total Assets:</strong> €{{ breakdown.assets_total }}</p>
 <p><strong>Total Debts:</strong> €{{ breakdown.debts_total }}</p>
 <p><strong>Net Zakatable Wealth:</strong> €{{ breakdown.net_zakatable }}</p>
-<p><strong>Nisab Threshold:</strong> €{{ breakdown.nisab }}</p>
+<p><strong>Nisab:</strong> €{{ breakdown.nisab }}</p>
 <p><strong>Zakat Due:</strong> €{{ breakdown.zakat_due }}</p>
+</div>
+{% endif %}
+
+<a href="{{ url_for('dashboard') }}" class="btn btn-success mt-4">
+Go to Dashboard
+</a>
 
 </div>
 
+</div>
 {% endif %}
 
 </div>
 
-</div>
-
-</div>
-
-{% endif %}
-
-</div>
+<script>
+window.onload = function() {
+    const result = document.getElementById("result-section");
+    if (result) {
+        result.scrollIntoView({ behavior: "smooth" });
+    }
+}
+</script>
 
 {% endblock %}

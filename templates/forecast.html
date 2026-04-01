@@ -3,7 +3,7 @@
 
 <div class="container py-5">
 
-<!-- PAGE HEADER -->
+<!-- HEADER -->
 <div class="text-center mb-5">
     <h2 class="gold-text fw-bold">AI Income Forecast</h2>
     <p class="text-muted">
@@ -12,7 +12,6 @@
 </div>
 
 <div class="row justify-content-center">
-
 <div class="col-lg-8">
 
 <div class="dashboard-card text-center">
@@ -27,112 +26,87 @@ Predict your financial growth using historical income data.
 
 <form method="POST">
 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
 <button class="btn btn-warning px-4 py-2 fw-bold">
 Generate Forecast
 </button>
-
 </form>
 
 </div>
-
+</div>
 </div>
 
+<!-- MESSAGE -->
+{% if message %}
+<div class="row justify-content-center mt-4">
+<div class="col-lg-8">
+<div class="alert alert-warning text-center">
+{{ message }}
 </div>
+</div>
+</div>
+{% endif %}
 
+<p class="text-muted text-center mb-3">
+This graph shows your past savings and predicts future savings based on your monthly saving habits.
+Future values are estimates and may vary.
+</p>
 
-{% if labels %}
-
+<!-- CHART -->
+{% if labels and labels|length > 1 %}
 <div class="row justify-content-center mt-5">
-
 <div class="col-lg-8">
 
 <div class="dashboard-card">
-
 <h4 class="gold-text mb-4 text-center">Income Trend</h4>
-
 <canvas id="forecastChart"></canvas>
-
 </div>
 
 </div>
-
 </div>
-
 {% endif %}
 
 </div>
 
-
-<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-{% if labels %}
-
+{% if labels and labels|length > 1 %}
 <script>
 
-window.onload = function() {
+window.addEventListener("load", function() {
 
-const labels = {{ labels | tojson }};
-const income = {{ income | tojson }};
+    const labels = JSON.parse('{{ labels | tojson | safe }}');
+    const income = JSON.parse('{{ income | tojson | safe }}');
 
-const canvas = document.getElementById("forecastChart");
+    const canvas = document.getElementById("forecastChart");
+    if (!canvas) return;
 
-if (!canvas) return;
+    const ctx = canvas.getContext("2d");
 
-const ctx = canvas.getContext("2d");
-
-new Chart(ctx, {
-
-type: "line",
-
-data: {
-
-labels: labels,
-
-datasets: [{
-label: "Income (€)",
-data: income,
-borderColor: "#C9A227",
-backgroundColor: "rgba(201,162,39,0.2)",
-borderWidth: 3,
-tension: 0.4,
-fill: true
-}]
-
-},
-
-options: {
-
-responsive: true,
-
-plugins: {
-legend: { display: true }
-},
-
-scales: {
-y: {
-title: {
-display: true,
-text: "Income (€)"
-}
-},
-x: {
-title: {
-display: true,
-text: "Date"
-}
-}
-}
-
-}
+    new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: labels,
+            datasets: [{
+                label: "Income (€)",
+                data: income,
+                borderColor: "#C9A227",
+                backgroundColor: "rgba(201,162,39,0.2)",
+                borderWidth: 3,
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: true }
+            }
+        }
+    });
 
 });
 
-}
-
 </script>
-
 {% endif %}
 
 {% endblock %}

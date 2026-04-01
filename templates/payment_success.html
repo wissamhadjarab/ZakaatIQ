@@ -1,17 +1,61 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="container text-center py-5">
+<div class="container py-5">
 
-<h2 class="gold-text">Payment Successful</h2>
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
 
-<p class="mt-3">Thank you for your donation.</p>
+            <div class="dashboard-card text-center p-5">
 
-<h3 class="fw-bold">€{{ amount }}</h3>
+                <!-- ICON -->
+                <div class="mb-4">
+                    <i class="bi bi-check-circle-fill" style="font-size:60px; color:#28a745;"></i>
+                </div>
 
-<a href="{{ url_for('dashboard') }}" class="btn btn-success mt-4">
-Return to Dashboard
-</a>
+                <!-- TITLE -->
+                <h2 class="gold-text fw-bold">Donation Successful</h2>
+
+                <!-- MESSAGE -->
+                <p class="text-muted mt-3">
+                    Thank you for your generosity. Your contribution will make a meaningful impact.
+                </p>
+
+                <!-- AMOUNT -->
+                <h1 class="fw-bold my-4" style="color:#28a745;">
+                    €{{ amount }}
+                </h1>
+
+                <!-- EXTRA INFO -->
+                <div class="mb-4">
+                    <p class="text-muted mb-1">
+                        Your donation has been securely processed.
+                    </p>
+                    <p class="text-muted">
+                        This amount has been deducted from your Zakat obligation.
+                    </p>
+                </div>
+
+                <!-- DIVIDER -->
+                <hr class="my-4">
+
+                <!-- ACTION BUTTONS -->
+                <div class="d-grid gap-3">
+
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-success fw-bold py-2">
+                        View Dashboard
+                    </a>
+
+                    <a href="{{ url_for('donate') }}" class="btn btn-outline-secondary">
+                        Make Another Donation
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+    </div>
 
 </div>
 

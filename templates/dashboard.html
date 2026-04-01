@@ -9,37 +9,33 @@
     <p class="lead">Assalamu Alaikum, {{ username }}. Here is your financial overview.</p>
 </div>
 
-
 <!-- QUICK ACTION CARDS -->
 <div class="row g-4 mb-5">
 
-<!-- Zakat Eligibility -->
 <div class="col-md-4">
 <a href="{{ url_for('eligibility') }}" style="text-decoration:none;">
-<div class="dashboard-card">
-<div class="card-icon"><i class="bi bi-calculator"></i></div>
+<div class="dashboard-card text-center">
+<i class="bi bi-calculator fs-1 text-warning"></i>
 <h4 class="mt-3">Zakat Eligibility</h4>
 <p class="text-muted">Calculate your Zakat obligation.</p>
 </div>
 </a>
 </div>
 
-<!-- AI Forecast -->
 <div class="col-md-4">
 <a href="{{ url_for('forecast') }}" style="text-decoration:none;">
-<div class="dashboard-card">
-<div class="card-icon"><i class="bi bi-graph-up"></i></div>
+<div class="dashboard-card text-center">
+<i class="bi bi-graph-up fs-1 text-warning"></i>
 <h4 class="mt-3">AI Forecast</h4>
 <p class="text-muted">Predict your financial future.</p>
 </div>
 </a>
 </div>
 
-<!-- Donate -->
 <div class="col-md-4">
 <a href="{{ url_for('donate') }}" style="text-decoration:none;">
-<div class="dashboard-card">
-<div class="card-icon"><i class="bi bi-heart"></i></div>
+<div class="dashboard-card text-center">
+<i class="bi bi-heart fs-1 text-warning"></i>
 <h4 class="mt-3">Donate Zakat</h4>
 <p class="text-muted">Give to verified charities.</p>
 </div>
@@ -48,8 +44,9 @@
 
 </div>
 
-
+<!-- ========================= -->
 <!-- ZAKAT SUMMARY -->
+<!-- ========================= -->
 {% if zakat_due %}
 
 <div class="dashboard-card mb-5 text-center">
@@ -64,19 +61,41 @@
 From your total zakat obligation of <strong>€{{ zakat_due }}</strong>
 </p>
 
-<p class="text-muted">
-<strong>Days Remaining Until Next Zakat:</strong>
-{% if days_remaining is not none %}
-    {{ days_remaining }} days
-{% else %}
-    Not calculated
+</div>
+
 {% endif %}
+
+<!-- ========================= -->
+<!-- 🗓️ ZAKAT TIMELINE (NEW) -->
+<!-- ========================= -->
+{% if zakat_due %}
+
+<div class="dashboard-card text-center mb-5">
+
+<h4 class="gold-text">Zakat Timeline</h4>
+
+<p><strong>Today (Gregorian):</strong> {{ today }}</p>
+<p><strong>Today (Islamic):</strong> {{ hijri_today.day }} / {{ hijri_today.month }} / {{ hijri_today.year }}</p>
+
+<hr>
+
+<p><strong>Zakat Due Date (Gregorian):</strong> {{ due_date }}</p>
+
+{% if hijri_due %}
+<p><strong>Zakat Due Date (Islamic):</strong> {{ hijri_due.day }} / {{ hijri_due.month }} / {{ hijri_due.year }}</p>
+{% endif %}
+
+<hr>
+
+<p>
+<strong>Time Remaining:</strong><br>
+Gregorian: {{ days_remaining }} days<br>
+Islamic: {{ days_remaining_lunar }} days
 </p>
 
 </div>
 
 {% endif %}
-
 
 <!-- REMINDER -->
 {% if reminder_message %}
@@ -85,8 +104,9 @@ From your total zakat obligation of <strong>€{{ zakat_due }}</strong>
 </div>
 {% endif %}
 
-
+<!-- ========================= -->
 <!-- DONATION PROGRESS -->
+<!-- ========================= -->
 {% if zakat_due %}
 
 <div class="card shadow-sm p-4 mb-5">
@@ -101,48 +121,20 @@ From your total zakat obligation of <strong>€{{ zakat_due }}</strong>
 {% set progress = ((donated / zakat_due) * 100) if zakat_due else 0 %}
 
 <div class="progress mt-3" style="height:25px;">
-
-<div 
-class="progress-bar bg-success"
+<div class="progress-bar bg-success"
 role="progressbar"
 style="width: {{ progress }}%;">
-
 {{ progress | round(1) }}%
-
 </div>
-
 </div>
 
 </div>
 
 {% endif %}
 
-
-<!-- AI ZAKAT PREDICTION -->
-{% if predicted_next_zakat %}
-
-<div class="card shadow-sm p-4 mb-5 text-center">
-
-<h4 class="gold-text mb-3">AI Zakat Prediction</h4>
-
-<p class="text-muted">
-Based on your financial history, your estimated Zakat next year:
-</p>
-
-<h2 class="fw-bold" style="color:#C9A227;">
-€{{ predicted_next_zakat }}
-</h2>
-
-<p class="text-muted">
-This estimate is based on your income growth trends.
-</p>
-
-</div>
-
-{% endif %}
-
-
+<!-- ========================= -->
 <!-- ZAKAT HISTORY -->
+<!-- ========================= -->
 <div class="mt-5">
 
 <h3 class="gold-text fw-bold mb-3">Zakat Eligibility History</h3>
@@ -151,7 +143,6 @@ This estimate is based on your income growth trends.
 {% if combined %}
 
 <div class="card shadow-sm">
-
 <div class="table-responsive">
 
 <table class="table table-hover mb-0">
@@ -171,7 +162,6 @@ This estimate is based on your income growth trends.
 <tbody>
 
 {% for row, res in combined %}
-
 <tr>
 <td>{{ row.created_at }}</td>
 <td>{{ row.income }}</td>
@@ -181,7 +171,6 @@ This estimate is based on your income growth trends.
 <td><strong>{{ res.result }}</strong></td>
 <td>{{ res.explanation }}</td>
 </tr>
-
 {% endfor %}
 
 </tbody>
@@ -192,9 +181,7 @@ This estimate is based on your income growth trends.
 </div>
 
 {% else %}
-
 <p class="text-muted">No Zakat history available yet.</p>
-
 {% endif %}
 
 </div>
