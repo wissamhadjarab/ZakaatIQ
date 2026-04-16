@@ -4,7 +4,7 @@
 <!-- HERO -->
 <section class="hero-section d-flex align-items-center justify-content-center">
 
-    <div class="hero-overlay">
+    <div class="hero-overlay w-100 h-100 d-flex align-items-center justify-content-center">
         <div class="hero-content text-center text-white">
 
             <h1 style="font-size:70px; font-weight:900;">
@@ -12,23 +12,22 @@
             </h1>
 
             <h2 style="font-size:32px; font-weight:700;" class="mb-4">
-                Understand, Calculate and Fulfil Your Zakat
+                {{ t('mission_title') }}
             </h2>
 
             <p style="font-size:20px; max-width:700px; margin:auto;" class="mb-4">
-                Learn about Zakat, understand Nisab, and manage your charitable obligations 
-                through a secure and intelligent platform.
+                {{ t('mission_desc') }}
             </p>
 
-            <!-- FIXED BUTTON GROUP -->
+            <!-- BUTTONS -->
             <div class="homepage-btn-container">
 
                 <a href="{{ url_for('eligibility') }}" class="homepage-btn">
-                    Calculate Zakat
+                    {{ t('calculate') }}
                 </a>
 
                 <a href="{{ url_for('home') }}" class="homepage-btn">
-                    Go to Home
+                    {{ t('home') }}
                 </a>
 
             </div>
@@ -44,17 +43,15 @@
 
 <div class="col-md-6">
     <h2 class="gold-text fw-bold mb-3" style="font-size:42px;">
-        What is Zakat?
+        {{ t('what_is_zakat') }}
     </h2>
 
     <p class="text-muted" style="font-size:20px;">
-        Zakat is one of the five pillars of Islam and is a mandatory charitable contribution 
-        for eligible Muslims. It requires giving 2.5% of one's qualifying wealth annually 
-        to those in need.
+        {{ t('zakat_para1') }}
     </p>
 
     <p class="text-muted" style="font-size:20px;">
-        It purifies wealth, supports the less fortunate, and strengthens community bonds.
+        {{ t('zakat_para2') }}
     </p>
 </div>
 
@@ -73,16 +70,15 @@
 
 <div class="col-md-6">
     <h2 class="gold-text fw-bold mb-3" style="font-size:42px;">
-        What is Nisab?
+        {{ t('what_is_nisab') }}
     </h2>
 
     <p class="text-muted" style="font-size:20px;">
-        Nisab is the minimum amount of wealth a Muslim must possess before they are required 
-        to pay Zakat. It is calculated based on the value of gold or silver.
+        {{ t('nisab_para1') }}
     </p>
 
     <p class="text-muted" style="font-size:20px;">
-        If your total wealth exceeds this threshold for a full lunar year, Zakat becomes obligatory.
+        {{ t('nisab_para2') }}
     </p>
 </div>
 
@@ -95,28 +91,25 @@
 </div>
 </div>
 
-<!-- 🤖 AI SECTION (NEW) -->
+<!-- AI SECTION -->
 <div class="container py-5">
 <div class="row align-items-center g-5">
 
 <div class="col-md-6">
     <h2 class="gold-text fw-bold mb-3" style="font-size:42px;">
-        AI & Smart Insights
+        {{ t('ai_title') }}
     </h2>
 
     <p class="text-muted" style="font-size:20px;">
-        ZakaatIQ uses intelligent data analysis to help you better understand your financial situation 
-        and Zakat obligations.
+        {{ t('ai_para1') }}
     </p>
 
     <p class="text-muted" style="font-size:20px;">
-        The system analyses your financial inputs and provides personalised insights, including 
-        future projections of your savings based on your habits.
+        {{ t('ai_para2') }}
     </p>
 
     <p class="text-muted" style="font-size:20px;">
-        While not a fully advanced AI system, it applies simplified machine learning concepts 
-        to assist with smarter financial decision-making.
+        {{ t('ai_para3') }}
     </p>
 </div>
 
@@ -133,7 +126,7 @@
 <div class="container py-5">
 <div class="text-center mb-5">
     <h2 class="gold-text fw-bold" style="font-size:48px;">
-        How ZakaatIQ Works
+        {{ t('how_it_works') }}
     </h2>
 </div>
 
@@ -141,27 +134,27 @@
 
 <div class="col-md-4">
 <div class="dashboard-card p-4">
-<h5 class="fw-bold" style="font-size:22px;">1. Enter Your Wealth</h5>
+<h5 class="fw-bold" style="font-size:22px;">{{ t('step1_title') }}</h5>
 <p class="text-muted" style="font-size:18px;">
-Input your savings, assets, and debts using our guided calculator.
+{{ t('step1_desc') }}
 </p>
 </div>
 </div>
 
 <div class="col-md-4">
 <div class="dashboard-card p-4">
-<h5 class="fw-bold" style="font-size:22px;">2. Calculate Zakat</h5>
+<h5 class="fw-bold" style="font-size:22px;">{{ t('step2_title') }}</h5>
 <p class="text-muted" style="font-size:18px;">
-We automatically calculate your Zakat based on Islamic principles.
+{{ t('step2_desc') }}
 </p>
 </div>
 </div>
 
 <div class="col-md-4">
 <div class="dashboard-card p-4">
-<h5 class="fw-bold" style="font-size:22px;">3. Donate Securely</h5>
+<h5 class="fw-bold" style="font-size:22px;">{{ t('step3_title') }}</h5>
 <p class="text-muted" style="font-size:18px;">
-Choose verified charities and track your Zakat payments.
+{{ t('step3_desc') }}
 </p>
 </div>
 </div>
@@ -175,15 +168,15 @@ Choose verified charities and track your Zakat payments.
 
 <div class="col-md-6">
     <h2 class="gold-text fw-bold mb-3" style="font-size:42px;">
-        Why Use ZakaatIQ?
+        {{ t('why_use') }}
     </h2>
 
     <ul class="text-muted" style="font-size:20px;">
-        <li>Accurate Zakat calculations</li>
-        <li>Secure donation tracking</li>
-        <li>Verified charities only</li>
-        <li>AI-powered insights</li>
-        <li>User-friendly interface</li>
+        <li>{{ t('why1') }}</li>
+        <li>{{ t('why2') }}</li>
+        <li>{{ t('why3') }}</li>
+        <li>{{ t('why4') }}</li>
+        <li>{{ t('why5') }}</li>
     </ul>
 </div>
 
@@ -199,12 +192,12 @@ Choose verified charities and track your Zakat payments.
 <!-- CTA -->
 <div class="text-center py-5" style="background:#f8f9fa;">
     <h3 class="fw-bold" style="font-size:34px;">
-        Start Your Zakat Journey Today
+        {{ t('cta_title') }}
     </h3>
 
     <a href="{{ url_for('eligibility') }}" 
        class="btn btn-warning mt-3 px-5 py-3 fw-bold">
-        Calculate Now
+        {{ t('calculate') }}
     </a>
 </div>
 

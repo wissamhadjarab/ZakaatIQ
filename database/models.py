@@ -1,12 +1,13 @@
 def init_tables(db):
     cur = db.cursor()
 
-    # USERS
+    # USERS (UPDATED WITH LANGUAGE)
     cur.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id SERIAL PRIMARY KEY,
             username TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL
+            password TEXT NOT NULL,
+            language VARCHAR(5) DEFAULT 'en'
         )
     """)
 
@@ -34,19 +35,20 @@ def init_tables(db):
         )
     """)
 
-    # DONATIONS
+    # DONATIONS (UPDATED TO MATCH YOUR APP.PY)
     cur.execute("""
         CREATE TABLE IF NOT EXISTS donations (
             id SERIAL PRIMARY KEY,
             user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-            charity_name TEXT,
+            charity_id INTEGER,
             amount NUMERIC,
-            reference TEXT,
+            payment_type TEXT,
+            payment_reference TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
 
-    # ZAKAT SNAPSHOTS (Deterministic Engine)
+    # ZAKAT SNAPSHOTS
     cur.execute("""
     CREATE TABLE IF NOT EXISTS zakat_snapshots (
         id SERIAL PRIMARY KEY,
@@ -64,15 +66,17 @@ def init_tables(db):
         zakat_due_date DATE NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
-""")
+    """)
+
     # CHARITIES
     cur.execute("""
     CREATE TABLE IF NOT EXISTS charities (
-    id SERIAL PRIMARY KEY,
-    name TEXT NOT NULL,
-    description TEXT,
-    website TEXT,
-    approved BOOLEAN DEFAULT FALSE
-)
-""")
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        description TEXT,
+        website TEXT,
+        approved BOOLEAN DEFAULT FALSE
+    )
+    """)
+
     db.commit()

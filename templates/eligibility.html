@@ -3,163 +3,161 @@
 
 <div class="container py-5">
 
-<!-- HEADER -->
 <div class="text-center mb-5">
-    <h2 class="gold-text fw-bold">Zakat Eligibility Calculator</h2>
+    <h2 class="gold-text fw-bold">{{ t('calculator') }}</h2>
     <p class="text-muted">
-        Enter your financial details below. Zakat is calculated on your total wealth (not income).
+        {{ t('eligibility_intro') if t('eligibility_intro') != 'eligibility_intro' else 'Enter your financial details below. Zakat is calculated on your total wealth, not your income.' }}
     </p>
 </div>
 
 <form method="POST">
 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-<!-- ========================= -->
-<!-- CASH & SAVINGS -->
-<!-- ========================= -->
 <div class="dashboard-card mb-4">
-<h5 class="gold-text mb-3">Cash & Bank</h5>
+<h5 class="gold-text mb-3">{{ t('cash_bank') }}</h5>
 
 <div class="row">
 <div class="col-md-4 mb-3">
-<label>Cash on Hand (€)</label>
+<label>{{ t('cash_on_hand') if t('cash_on_hand') != 'cash_on_hand' else 'Cash on Hand (€)' }}</label>
 <input type="number" step="0.01" name="cash_on_hand" class="form-control">
 </div>
 
 <div class="col-md-4 mb-3">
-<label>Bank Accounts (€)</label>
+<label>{{ t('bank_accounts') if t('bank_accounts') != 'bank_accounts' else 'Bank Accounts (€)' }}</label>
 <input type="number" step="0.01" name="bank_accounts" class="form-control">
 </div>
 
 <div class="col-md-4 mb-3">
-<label>Monthly Savings (€)</label>
+<label>{{ t('monthly_savings') if t('monthly_savings') != 'monthly_savings' else 'Monthly Savings (€)' }}</label>
 <input type="number" step="0.01" name="monthly_savings" class="form-control">
-<small class="text-muted">Used for forecasting only</small>
+<small class="text-muted">{{ t('forecast_only') if t('forecast_only') != 'forecast_only' else 'Used for forecasting only' }}</small>
 </div>
 </div>
 
 </div>
 
-<!-- PRECIOUS METALS -->
 <div class="dashboard-card mb-4">
-<h5 class="gold-text mb-3">Precious Metals</h5>
+<h5 class="gold-text mb-3">{{ t('metals') }}</h5>
 
 <div class="row">
 <div class="col-md-6 mb-3">
-<label>Gold (grams)</label>
+<label>{{ t('gold_grams') if t('gold_grams') != 'gold_grams' else 'Gold (grams)' }}</label>
 <input type="number" step="0.01" name="gold_grams" class="form-control">
 </div>
 
 <div class="col-md-6 mb-3">
-<label>Silver (grams)</label>
+<label>{{ t('silver_grams') if t('silver_grams') != 'silver_grams' else 'Silver (grams)' }}</label>
 <input type="number" step="0.01" name="silver_grams" class="form-control">
 </div>
 </div>
 
 </div>
 
-<!-- INVESTMENTS -->
 <div class="dashboard-card mb-4">
-<h5 class="gold-text mb-3">Investments</h5>
+<h5 class="gold-text mb-3">{{ t('investments') }}</h5>
 
 <div class="row">
 <div class="col-md-4 mb-3">
-<label>Stocks (€)</label>
+<label>{{ t('stocks') if t('stocks') != 'stocks' else 'Stocks (€)' }}</label>
 <input type="number" step="0.01" name="stocks" class="form-control">
 </div>
 
 <div class="col-md-4 mb-3">
-<label>Crypto (€)</label>
+<label>{{ t('crypto') if t('crypto') != 'crypto' else 'Crypto (€)' }}</label>
 <input type="number" step="0.01" name="crypto" class="form-control">
 </div>
 
 <div class="col-md-4 mb-3">
-<label>Other Investments (€)</label>
+<label>{{ t('other_investments') if t('other_investments') != 'other_investments' else 'Other Investments (€)' }}</label>
 <input type="number" step="0.01" name="investments" class="form-control">
 </div>
 </div>
 
 </div>
 
-<!-- BUSINESS -->
 <div class="dashboard-card mb-4">
-<h5 class="gold-text mb-3">Business Assets</h5>
+<h5 class="gold-text mb-3">{{ t('business_assets') if t('business_assets') != 'business_assets' else 'Business Assets' }}</h5>
 
 <div class="row">
 <div class="col-md-4 mb-3">
-<label>Inventory (€)</label>
+<label>{{ t('inventory') if t('inventory') != 'inventory' else 'Inventory (€)' }}</label>
 <input type="number" step="0.01" name="business_inventory" class="form-control">
 </div>
 
 <div class="col-md-4 mb-3">
-<label>Receivables (€)</label>
+<label>{{ t('receivables') if t('receivables') != 'receivables' else 'Receivables (€)' }}</label>
 <input type="number" step="0.01" name="receivables" class="form-control">
 </div>
 
 <div class="col-md-4 mb-3">
-<label>Land Value (€)</label>
+<label>{{ t('land_value') if t('land_value') != 'land_value' else 'Land Value (€)' }}</label>
 <input type="number" step="0.01" name="land_value" class="form-control">
 </div>
 </div>
 
 </div>
 
-<!-- DEBTS -->
 <div class="dashboard-card mb-4">
-<h5 class="gold-text mb-3">Debts & Liabilities</h5>
+<h5 class="gold-text mb-3">{{ t('debts_section') }}</h5>
 
 <div class="row">
 <div class="col-md-4 mb-3">
-<label>Short Term Debts (€)</label>
+<label>{{ t('short_term_debts') if t('short_term_debts') != 'short_term_debts' else 'Short Term Debts (€)' }}</label>
 <input type="number" step="0.01" name="short_term_debts" class="form-control">
 </div>
 
 <div class="col-md-4 mb-3">
-<label>Bills & Taxes (€)</label>
+<label>{{ t('bills_taxes') if t('bills_taxes') != 'bills_taxes' else 'Bills & Taxes (€)' }}</label>
 <input type="number" step="0.01" name="bills_taxes_due" class="form-control">
 </div>
 
 <div class="col-md-4 mb-3">
-<label>Business Payables (€)</label>
+<label>{{ t('business_payables') if t('business_payables') != 'business_payables' else 'Business Payables (€)' }}</label>
 <input type="number" step="0.01" name="business_payables" class="form-control">
 </div>
 </div>
 
 </div>
 
-<!-- BUTTON -->
 <div class="text-center mt-4">
 <button class="btn btn-warning px-5 py-3 fw-bold">
-Calculate Zakat
+{{ t('calculate') }}
 </button>
 </div>
 
 </form>
 
-<!-- RESULT -->
 {% if result %}
 <div id="result-section" class="mt-5">
-
 <div class="dashboard-card text-center">
-<h4 class="gold-text">Eligibility Result</h4>
-<h2 class="mt-3">{{ result }}</h2>
+
+<h4 class="gold-text">{{ t('eligibility_result') if t('eligibility_result') != 'eligibility_result' else t('result') }}</h4>
+
+<h2 class="mt-3">
+    {% if result == 'zakat_required' or result == 'Zakat is Required' or result == 'Zakat requise' %}
+        {{ t('zakat_required') }}
+    {% elif result == 'zakat_not_required' or result == 'Zakat is Not Required' or result == 'Zakat non requise' %}
+        {{ t('zakat_not_required') }}
+    {% else %}
+        {{ result }}
+    {% endif %}
+</h2>
 
 {% if breakdown %}
 <div class="mt-4 text-start">
-<p><strong>Total Assets:</strong> €{{ breakdown.assets_total }}</p>
-<p><strong>Total Debts:</strong> €{{ breakdown.debts_total }}</p>
-<p><strong>Net Zakatable Wealth:</strong> €{{ breakdown.net_zakatable }}</p>
-<p><strong>Nisab:</strong> €{{ breakdown.nisab }}</p>
-<p><strong>Zakat Due:</strong> €{{ breakdown.zakat_due }}</p>
+<p><strong>{{ t('total_assets') }}:</strong> €{{ breakdown.assets_total }}</p>
+<p><strong>{{ t('total_debts') }}:</strong> €{{ breakdown.debts_total }}</p>
+<p><strong>{{ t('net_wealth') }}:</strong> €{{ breakdown.net_zakatable }}</p>
+<p><strong>{{ t('nisab') }}:</strong> €{{ breakdown.nisab }}</p>
+<p><strong>{{ t('zakat_due') }}:</strong> €{{ breakdown.zakat_due }}</p>
 </div>
 {% endif %}
 
 <a href="{{ url_for('dashboard') }}" class="btn btn-success mt-4">
-Go to Dashboard
+{{ t('dashboard') }}
 </a>
 
 </div>
-
 </div>
 {% endif %}
 

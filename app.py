@@ -1,6 +1,5 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session,flash
 from routes.auth import auth_bp
-from routes.zakat import zakat_bp
 from database.db import get_db, close_db
 from database.models import init_tables
 from services.zakat_service import calculate_zakat
@@ -9,20 +8,23 @@ from hijri_converter import convert
 
 import os
 import pickle
-import uuid
 from datetime import datetime, timedelta, date
 from cryptography.fernet import Fernet
 from dotenv import load_dotenv
 import stripe
 
-stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
-BASE_URL = os.getenv("BASE_URL") or "http://127.0.0.1:5000"
-print("BASE_URL =", BASE_URL)
+from translations import translations
 
 # -----------------------------
 # LOAD ENV VARIABLES
 # -----------------------------
 load_dotenv()
+
+# -----------------------------
+# STRIPE CONFIG
+# -----------------------------
+stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
+BASE_URL = os.getenv("BASE_URL") or "http://127.0.0.1:5000"
 
 # -----------------------------
 # APP CONFIG
@@ -32,7 +34,7 @@ app.secret_key = os.environ.get("FLASK_SECRET_KEY")
 
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
-    SESSION_COOKIE_SAMESITE='Lax',
+    SESSION_COOKIE_SAMESITE="Lax",
     SESSION_COOKIE_SECURE=False
 )
 
@@ -42,28 +44,65 @@ csrf = CSRFProtect(app)
 # REGISTER BLUEPRINTS
 # -----------------------------
 app.register_blueprint(auth_bp)
-app.register_blueprint(zakat_bp)
 
 # -----------------------------
-# DATABASE INIT
+# TRANSLATION SYSTEM
+# -----------------------------
+def get_text(key):
+    lang = session.get("lang", "en")
+    return translations.get(lang, {}).get(key, translations["en"].get(key, key))
+
+@app.context_processor
+def inject_translations():
+    return dict(t=get_text)
+
+@app.route("/set_language/<lang>")
+def set_language(lang):
+    session["lang"] = lang
+
+    if "user_id" in session:
+        try:
+            db = get_db()
+            cur = db.cursor()
+            cur.execute(
+                "UPDATE users SET language=%s WHERE id=%s",
+                (lang, session["user_id"])
+            )
+            db.commit()
+            cur.close()
+        except Exception:
+            pass
+
+    return redirect(request.referrer or url_for("home"))
+
+# -----------------------------
+# BEFORE REQUEST
 # -----------------------------
 @app.before_request
-def create_tables():
-    if not hasattr(app, 'db_initialized'):
+def setup_every_request():
+    if not hasattr(app, "db_initialized"):
         db = get_db()
         init_tables(db)
         app.db_initialized = True
 
+    if "lang" not in session:
+        supported = ["en", "ar", "ur", "fr"]
+        browser_lang = request.accept_languages.best_match(supported)
+        session["lang"] = browser_lang if browser_lang else "en"
+
+# -----------------------------
+# CLOSE DB
+# -----------------------------
 @app.teardown_appcontext
 def shutdown_session(exception=None):
     close_db()
 
-# -----------------------------
+# ----------------------------- 
 # ML MODEL
 # -----------------------------
 try:
     eligibility_model = pickle.load(open("models/eligibility_model.pkl", "rb"))
-except:
+except Exception:
     eligibility_model = None
 
 # -----------------------------
@@ -85,7 +124,7 @@ def decrypt_value(token):
 def safe_decrypt(token):
     try:
         return decrypt_value(token)
-    except:
+    except Exception:
         return "0"
 
 # -----------------------------
@@ -98,32 +137,27 @@ def index():
 @app.route("/home")
 def home():
     return render_template("index.html")
-
 # -----------------------------
 # DASHBOARD
 # -----------------------------
 @app.route("/dashboard")
 def dashboard():
-
     if "user_id" not in session:
         return redirect(url_for("auth.login"))
 
     db = get_db()
     cur = db.cursor()
 
-    # -----------------------------
-    # DATES
-    # -----------------------------
     today = date.today()
 
+    # Hijri today
     try:
-        from hijri_converter import convert
         hijri_today = convert.Gregorian(today.year, today.month, today.day).to_hijri()
-    except:
+    except Exception:
         hijri_today = None
 
     # -----------------------------
-    # LATEST ZAKAT SNAPSHOT
+    # Latest zakat snapshot
     # -----------------------------
     cur.execute("""
         SELECT zakat_due, zakat_due_date, created_at
@@ -131,13 +165,12 @@ def dashboard():
         WHERE user_id=%s
         ORDER BY created_at DESC
         LIMIT 1
-    """,(session["user_id"],))
-
+    """, (session["user_id"],))
     snapshot = cur.fetchone()
 
     zakat_due = 0
-    days_remaining = None
-    days_remaining_lunar = None
+    days_remaining = None              # Gregorian
+    days_remaining_lunar = None        # Hijri (FIXED)
     due_date = None
     hijri_due = None
 
@@ -153,45 +186,77 @@ def dashboard():
         if hasattr(snapshot_date, "date"):
             snapshot_date = snapshot_date.date()
 
-        # Gregorian days remaining
+        # -----------------------------
+        # Gregorian remaining (optional)
+        # -----------------------------
         days_remaining = (due_date - today).days
 
-        # Islamic (approx)
-        days_passed = (today - snapshot_date).days % 354
-        days_remaining_lunar = 354 - days_passed
+    
+    try:
+        today_hijri = convert.Gregorian(today.year, today.month, today.day).to_hijri()
 
-        # Hijri due date
+        # End of current Islamic year = 1 Muharram next year
+        end_hijri_year = convert.Hijri(
+            today_hijri.year + 1,
+            1,
+            1
+        )
+
+        # Convert that to Gregorian
+        end_gregorian = end_hijri_year.to_gregorian()
+
+        from datetime import date as d
+
+        today_g = d(today.year, today.month, today.day)
+        end_g = d(end_gregorian.year, end_gregorian.month, end_gregorian.day)
+
+        # FINAL RESULT
+        days_remaining_lunar = (end_g - today_g).days
+
+        # Save this so you can display it
+        islamic_year_end_date = end_g
+
+    except Exception as e:
+        print("HIJRI ERROR:", e)
+        days_remaining_lunar = 0
+        islamic_year_end_date = None
+    
+
+        # -----------------------------
+        # Hijri due date (for display)
+        # -----------------------------
         try:
-            from hijri_converter import convert
             hijri_due = convert.Gregorian(
                 due_date.year,
                 due_date.month,
                 due_date.day
             ).to_hijri()
-        except:
+        except Exception:
             hijri_due = None
 
     # -----------------------------
-    # MAIN REMINDER
+    # Reminder message 
     # -----------------------------
     reminder_message = None
-
-    if days_remaining is not None:
-        if days_remaining <= 0:
-            reminder_message = "Your Zakat is now due."
-        elif days_remaining <= 30:
-            reminder_message = f"Reminder: Your Zakat is due in {days_remaining} days"
+    if days_remaining_lunar is not None:
+        if days_remaining_lunar <= 0:
+            reminder_message = get_text("zakat_due_now")
+        elif days_remaining_lunar <= 30:
+            reminder_message = (
+                get_text("zakat_due_soon")
+                + f" {days_remaining_lunar} "
+                + get_text("days")
+            )
 
     # -----------------------------
-    # DONATIONS
+    # Donations this year
     # -----------------------------
     cur.execute("""
-        SELECT COALESCE(SUM(amount),0)
+        SELECT COALESCE(SUM(amount), 0)
         FROM donations
         WHERE user_id=%s
-        AND DATE_PART('year',created_at)=DATE_PART('year',CURRENT_DATE)
-    """,(session["user_id"],))
-
+        AND DATE_PART('year', created_at)=DATE_PART('year', CURRENT_DATE)
+    """, (session["user_id"],))
     donated = float(cur.fetchone()[0] or 0)
 
     remaining_zakat = zakat_due - donated
@@ -201,15 +266,14 @@ def dashboard():
     monthly_recommendation = round(zakat_due / 12, 2) if zakat_due else 0
 
     # -----------------------------
-    # HISTORY (FIXED)
+    # Financial history
     # -----------------------------
     cur.execute("""
-        SELECT income,savings,debts,gold,created_at
+        SELECT income, savings, debts, gold, created_at
         FROM financial_history
         WHERE user_id=%s
         ORDER BY created_at DESC
-    """,(session["user_id"],))
-
+    """, (session["user_id"],))
     history_rows = cur.fetchall()
 
     history = []
@@ -222,13 +286,15 @@ def dashboard():
             "created_at": row[4]
         })
 
+    # -----------------------------
+    # Zakat results
+    # -----------------------------
     cur.execute("""
-        SELECT result,explanation,created_at
+        SELECT result, explanation, created_at
         FROM zakat_results
         WHERE user_id=%s
         ORDER BY created_at DESC
-    """,(session["user_id"],))
-
+    """, (session["user_id"],))
     results_rows = cur.fetchall()
 
     results = []
@@ -242,30 +308,49 @@ def dashboard():
     combined = list(zip(history, results))
 
     # -----------------------------
-    # RENDER
+    # Chart data
     # -----------------------------
+    labels = []
+    values = []
+
+    cur.execute("""
+        SELECT created_at, income
+        FROM financial_history
+        WHERE user_id=%s
+        ORDER BY created_at ASC
+    """, (session["user_id"],))
+    chart_rows = cur.fetchall()
+
+    for r in chart_rows:
+        labels.append(r[0].strftime("%b %Y"))
+        values.append(float(safe_decrypt(r[1])))
+
+    cur.close()
+
     return render_template(
         "dashboard.html",
-        username=session["username"],
+        username=session.get("username", "User"),
         zakat_due=zakat_due,
         donated=donated,
         remaining_zakat=remaining_zakat,
         monthly_recommendation=monthly_recommendation,
-        days_remaining=days_remaining,
-        days_remaining_lunar=days_remaining_lunar,
+        days_remaining=days_remaining,              # Gregorian
+        days_remaining_lunar=days_remaining_lunar,  # ✅ NOW CORRECT (Islamic year)
         today=today,
         hijri_today=hijri_today,
         due_date=due_date,
         hijri_due=hijri_due,
         reminder_message=reminder_message,
-        combined=combined
+        combined=combined,
+        labels=labels,
+        values=values,
+        islamic_year_end_date=islamic_year_end_date,
     )
 # -----------------------------
 # ELIGIBILITY
 # -----------------------------
-@app.route("/eligibility", methods=["GET","POST"])
+@app.route("/eligibility", methods=["GET", "POST"])
 def eligibility():
-
     if "user_id" not in session:
         return redirect(url_for("auth.login"))
 
@@ -274,10 +359,9 @@ def eligibility():
 
     if request.method == "POST":
         try:
-
             data = {
                 "zakat_rate": 0.025,
-                "nisab_basis": request.form.get("nisab_basis","gold"),
+                "nisab_basis": request.form.get("nisab_basis", "gold"),
                 "gold_price_per_gram": float(request.form.get("gold_price_per_gram") or 65),
                 "silver_price_per_gram": float(request.form.get("silver_price_per_gram") or 0.75),
 
@@ -296,14 +380,12 @@ def eligibility():
                 "bills_taxes_due": float(request.form.get("bills_taxes_due") or 0),
                 "business_payables": float(request.form.get("business_payables") or 0),
 
-        
                 "monthly_savings": float(request.form.get("monthly_savings") or 0),
             }
 
             z = calculate_zakat(data)
 
-            result = "Zakat is Required" if z.is_above_nisab else "Zakat is Not Required"
-
+            result = "zakat_required" if z.is_above_nisab else "zakat_not_required"
             breakdown = {
                 "assets_total": z.assets_total,
                 "debts_total": z.debts_total,
@@ -317,15 +399,13 @@ def eligibility():
             db = get_db()
             cur = db.cursor()
 
-            # -----------------------------
-            # SAVE SNAPSHOT
-            # -----------------------------
+            # Save snapshot
             cur.execute("""
                 INSERT INTO zakat_snapshots
-                (user_id,assets_total,debts_total,net_zakatable,nisab,zakat_due,
-                nisab_basis,zakat_rate,zakat_due_date)
-                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
-            """,(
+                (user_id, assets_total, debts_total, net_zakatable, nisab, zakat_due,
+                 nisab_basis, zakat_rate, zakat_due_date)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (
                 session["user_id"],
                 encrypt_value(z.assets_total),
                 encrypt_value(z.debts_total),
@@ -337,47 +417,44 @@ def eligibility():
                 zakat_due_date
             ))
 
-            # -----------------------------
-            # SAVE FINANCIAL HISTORY (FIXED)
-            # -----------------------------
+            # Save financial history
             cur.execute("""
                 INSERT INTO financial_history
-                (user_id,income,savings,debts,gold)
-                VALUES (%s,%s,%s,%s,%s)
-            """,(
+                (user_id, income, savings, debts, gold)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (
                 session["user_id"],
-                encrypt_value(data["monthly_savings"]),   # ✅ USE THIS FOR FORECAST
+                encrypt_value(data["monthly_savings"]),
                 encrypt_value(z.assets_total),
                 encrypt_value(z.debts_total),
                 encrypt_value(data["gold_grams"])
             ))
 
-            # -----------------------------
-            # SAVE RESULT
-            # -----------------------------
+            # Save result
             cur.execute("""
                 INSERT INTO zakat_results
-                (user_id,result,explanation)
-                VALUES (%s,%s,%s)
-            """,(
+                (user_id, result, explanation)
+                VALUES (%s, %s, %s)
+            """, (
                 session["user_id"],
                 result,
-                f"Net zakatable wealth: {round(z.net_zakatable,2)}"
+                f"Net zakatable wealth: {round(z.net_zakatable, 2)}"
             ))
 
             db.commit()
+            cur.close()
 
         except Exception as e:
             print("ERROR:", e)
             result = f"Error: {e}"
 
     return render_template("eligibility.html", result=result, breakdown=breakdown)
+
 # -----------------------------
 # FORECAST
 # -----------------------------
 @app.route("/forecast", methods=["GET", "POST"])
 def forecast():
-
     if "user_id" not in session:
         return redirect(url_for("auth.login"))
 
@@ -386,54 +463,43 @@ def forecast():
     message = None
 
     if request.method == "POST":
-
         db = get_db()
         cur = db.cursor()
 
         cur.execute("""
-        SELECT created_at, income
-        FROM financial_history
-        WHERE user_id=%s
-        ORDER BY created_at ASC
+            SELECT created_at, income
+            FROM financial_history
+            WHERE user_id=%s
+            ORDER BY created_at ASC
         """, (session["user_id"],))
 
         rows = cur.fetchall()
+        cur.close()
 
-        # -----------------------------
-        # CASE 1: NO DATA
-        # -----------------------------
+      
         if len(rows) == 0:
-            message = "No financial history available yet. Please complete a Zakat calculation first."
+            message = get_text("forecast_no_data")
 
-        # -----------------------------
-        # CASE 2: ONLY 1 DATA POINT
-        # -----------------------------
+        
         elif len(rows) == 1:
-            message = "More data is required to generate a meaningful forecast. Please complete additional calculations over time."
+            message = message = get_text("forecast_not_enough")
 
             r = rows[0]
             labels.append(r[0].strftime("%b %Y"))
             income.append(float(safe_decrypt(r[1])))
 
-        # -----------------------------
-        # CASE 3: ENOUGH DATA
-        # -----------------------------
+        
         else:
-            # Load historical data
             for r in rows:
                 labels.append(r[0].strftime("%b %Y"))
                 income.append(float(safe_decrypt(r[1])))
 
-            # -----------------------------
-            # NEW FORECAST LOGIC (FIXED)
-            # -----------------------------
             last = income[-1]
+            monthly = income[-1]
 
-            # use last monthly saving as prediction driver
-            monthly_saving = income[-1]
-
+            # Predict next 5 months
             for i in range(1, 6):
-                future = last + (monthly_saving * i)
+                future = last + (monthly * i)
                 income.append(round(future, 2))
 
                 future_date = datetime.today() + timedelta(days=30 * i)
@@ -450,14 +516,12 @@ def forecast():
 # -----------------------------
 @app.route("/donate", methods=["GET", "POST"])
 def donate():
-
     if "user_id" not in session:
         return redirect(url_for("auth.login"))
 
     db = get_db()
     cur = db.cursor()
 
-    # Load approved charities
     cur.execute("""
         SELECT id, name, description
         FROM charities
@@ -466,19 +530,14 @@ def donate():
     charities = cur.fetchall()
 
     if request.method == "POST":
-
         charity_id = request.form.get("charity")
         amount = float(request.form.get("amount"))
         payment_type = request.form.get("payment_type")
 
-        print("🔥 STRIPE ROUTE HIT")
-
-        # Convert to cents
         amount_cents = int(amount * 100)
 
         checkout_session = stripe.checkout.Session.create(
             payment_method_types=["card"],
-
             line_items=[{
                 "price_data": {
                     "currency": "eur",
@@ -489,40 +548,36 @@ def donate():
                 },
                 "quantity": 1,
             }],
-
             mode="payment",
-
             success_url=BASE_URL + "/payment-success?session_id={CHECKOUT_SESSION_ID}",
             cancel_url=BASE_URL + "/donate",
-
-            # ✅ FIXED METADATA
             metadata={
                 "charity_id": charity_id,
                 "payment_type": payment_type
             }
         )
 
+        cur.close()
         return redirect(checkout_session.url, code=303)
 
+    cur.close()
     return render_template("donate.html", charities=charities)
+
 # -----------------------------
 # PAYMENT SUCCESS
 # -----------------------------
 @app.route("/payment-success")
 def payment_success():
-
     if "user_id" not in session:
         return redirect(url_for("auth.login"))
 
     session_id = request.args.get("session_id")
-
     if not session_id:
         return redirect(url_for("dashboard"))
 
     checkout_session = stripe.checkout.Session.retrieve(session_id)
 
-    amount = checkout_session.amount_total / 100  # cents → euros
-
+    amount = checkout_session.amount_total / 100
     charity_id = checkout_session.metadata.get("charity_id")
     payment_type = checkout_session.metadata.get("payment_type")
 
@@ -532,8 +587,8 @@ def payment_success():
     cur.execute("""
         INSERT INTO donations
         (user_id, charity_id, amount, payment_type, payment_reference)
-        VALUES (%s,%s,%s,%s,%s)
-    """,(
+        VALUES (%s, %s, %s, %s, %s)
+    """, (
         session["user_id"],
         charity_id,
         amount,
@@ -542,18 +597,12 @@ def payment_success():
     ))
 
     db.commit()
+    cur.close()
 
     return render_template("payment_success.html", amount=amount)
-# -----------------------------
-# LOGOUT
-# -----------------------------
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect(url_for("auth.login"))
 
 # -----------------------------
 # RUN
 # -----------------------------
-if __name__=="__main__":
+if __name__ == "__main__":
     app.run(debug=True)

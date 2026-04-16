@@ -1,76 +1,87 @@
 {% extends "base.html" %}
 {% block content %}
 
-<!-- HERO SECTION -->
 <section class="hero-section d-flex align-items-center justify-content-center">
-    <div class="hero-overlay">
-        <div class="hero-content text-center">
+<div class="hero-overlay w-100 h-100 d-flex align-items-center justify-content-center">
 
-            <!-- Arabic -->
-            <h1 class="hero-arabic">زكاة الذكاء</h1>
+<div class="container text-center text-white">
 
-            <!-- Title -->
-            <h2 class="hero-title mb-4">
-                ZakaatIQ – Smart Islamic Finance Assistant
-            </h2>
+<!-- APP NAME -->
+<h1 class="hero-arabic mb-3">زكاة الذكاء</h1>
 
-            <!-- Verse -->
-            <p class="hero-translation mb-4">
-                “Take from their wealth a charity by which you purify them and elevate them.”
-                <br>— Surah At-Tawbah (9:103)
-            </p>
+<!-- TITLE -->
+<h2 class="fw-bold mb-3">
+ZakaatIQ
+</h2>
 
-            <!-- BUTTONS WITH HOVER INFO -->
-            <div class="homepage-btn-container">
+<p class="lead mb-4">
+{{ t('hero_title') }}
+</p>
 
-                <div class="btn-wrapper">
-                    <a href="{{ url_for('eligibility') }}" class="homepage-btn">
-                        Zakat Eligibility
-                    </a>
-                    <span class="btn-info">Check if you need to pay Zakat</span>
-                </div>
+<!-- AYAH -->
+<div class="mb-4" style="max-width:700px; margin:auto;">
+    
+<p class="hero-arabic" style="font-size:20px;">
+خُذْ مِنْ أَمْوَالِهِمْ صَدَقَةً تُطَهِّرُهُمْ وَتُزَكِّيهِمْ بِهَا
+</p>
 
-                <div class="btn-wrapper">
-                    <a href="{{ url_for('forecast') }}" class="homepage-btn">
-                        AI Forecast
-                    </a>
-                    <span class="btn-info">Predict your future Zakat obligations</span>
-                </div>
+{% if session.get('lang') != 'ar' %}
+<p class="text-light small">
+{{ t('hero_subtitle') }}
+</p>
+{% endif %}
 
-                <div class="btn-wrapper">
-                    <a href="{{ url_for('donate') }}" class="homepage-btn">
-                        Donate
-                    </a>
-                    <span class="btn-info">Donate securely to verified charities</span>
-                </div>
+<p class="text-light small">
+{{ t('ayah_ref') }}
+</p>
 
-                {% if 'user_id' in session %}
-                <div class="btn-wrapper">
-                    <a href="{{ url_for('dashboard') }}" class="homepage-btn">
-                        Dashboard
-                    </a>
-                    <span class="btn-info">View your Zakat summary and progress</span>
-                </div>
-                {% endif %}
+</div>
 
-                <div class="btn-wrapper">
-                    <a href="{{ url_for('auth.login') }}" class="homepage-btn">
-                        Login
-                    </a>
-                    <span class="btn-info">Access your account</span>
-                </div>
+<!-- BUTTONS GRID -->
+<div class="row justify-content-center g-3 mt-4">
 
-                <div class="btn-wrapper">
-                    <a href="{{ url_for('auth.register') }}" class="homepage-btn">
-                        Register
-                    </a>
-                    <span class="btn-info">Create a new account</span>
-                </div>
+<div class="col-md-3 col-6">
+<a href="{{ url_for('eligibility') }}" class="btn btn-warning w-100 py-2">
+{{ t('calculator') }}
+</a>
+</div>
 
-            </div>
+<div class="col-md-3 col-6">
+<a href="{{ url_for('forecast') }}" class="btn btn-warning w-100 py-2">
+{{ t('forecast') }}
+</a>
+</div>
 
-        </div>
-    </div>
+<div class="col-md-3 col-6">
+<a href="{{ url_for('donate') }}" class="btn btn-warning w-100 py-2">
+{{ t('donate') }}
+</a>
+</div>
+
+{% if 'user_id' in session %}
+<div class="col-md-3 col-6">
+<a href="{{ url_for('dashboard') }}" class="btn btn-warning w-100 py-2">
+{{ t('dashboard') }}
+</a>
+</div>
+{% endif %}
+
+<div class="col-md-3 col-6">
+<a href="{{ url_for('auth.login') }}" class="btn btn-outline-light w-100 py-2">
+{{ t('login') }}
+</a>
+</div>
+
+<div class="col-md-3 col-6">
+<a href="{{ url_for('auth.register') }}" class="btn btn-outline-light w-100 py-2">
+{{ t('register') }}
+</a>
+</div>
+
+</div>
+
+</div>
+</div>
 </section>
 
 {% endblock %}

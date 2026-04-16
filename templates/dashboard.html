@@ -3,164 +3,160 @@
 
 <div class="container py-5">
 
-<!-- PAGE HEADER -->
+<!-- HEADER -->
 <div class="text-center mb-5">
-    <h2 class="gold-text fw-bold">Your Dashboard</h2>
-    <p class="lead">Assalamu Alaikum, {{ username }}. Here is your financial overview.</p>
+    <h2 class="gold-text fw-bold">{{ t('dashboard') }}</h2>
+    <p class="lead">{{ t('welcome') }}, {{ username }}</p>
 </div>
 
-<!-- QUICK ACTION CARDS -->
+<!-- ACTION CARDS -->
 <div class="row g-4 mb-5">
 
 <div class="col-md-4">
-<a href="{{ url_for('eligibility') }}" style="text-decoration:none;">
+<a href="{{ url_for('eligibility') }}">
 <div class="dashboard-card text-center">
 <i class="bi bi-calculator fs-1 text-warning"></i>
-<h4 class="mt-3">Zakat Eligibility</h4>
-<p class="text-muted">Calculate your Zakat obligation.</p>
+<h4 class="mt-3">{{ t('calculator') }}</h4>
+<p class="text-muted">{{ t('calculate_zakat_desc') }}</p>
 </div>
 </a>
 </div>
 
 <div class="col-md-4">
-<a href="{{ url_for('forecast') }}" style="text-decoration:none;">
+<a href="{{ url_for('forecast') }}">
 <div class="dashboard-card text-center">
 <i class="bi bi-graph-up fs-1 text-warning"></i>
-<h4 class="mt-3">AI Forecast</h4>
-<p class="text-muted">Predict your financial future.</p>
+<h4 class="mt-3">{{ t('forecast') }}</h4>
+<p class="text-muted">{{ t('forecast_desc') }}</p>
 </div>
 </a>
 </div>
 
 <div class="col-md-4">
-<a href="{{ url_for('donate') }}" style="text-decoration:none;">
+<a href="{{ url_for('donate') }}">
 <div class="dashboard-card text-center">
 <i class="bi bi-heart fs-1 text-warning"></i>
-<h4 class="mt-3">Donate Zakat</h4>
-<p class="text-muted">Give to verified charities.</p>
+<h4 class="mt-3">{{ t('donate') }}</h4>
+<p class="text-muted">{{ t('donate_desc') }}</p>
 </div>
 </a>
 </div>
 
 </div>
 
-<!-- ========================= -->
 <!-- ZAKAT SUMMARY -->
-<!-- ========================= -->
-{% if zakat_due %}
+{% if zakat_due is not none %}
+<div class="dashboard-card text-center mb-5">
 
-<div class="dashboard-card mb-5 text-center">
+<h4 class="gold-text">{{ t('remaining_zakat') }}</h4>
 
-<h4 class="gold-text">Remaining Zakat To Pay</h4>
-
-<h1 class="fw-bold mt-3" style="font-size:52px; color:#C9A227;">
-€{{ remaining_zakat }}
+<h1 style="font-size:52px; color:#C9A227;">
+€{{ remaining_zakat | round(2) }}
 </h1>
 
 <p class="text-muted">
-From your total zakat obligation of <strong>€{{ zakat_due }}</strong>
+{{ t('total_due') }}: €{{ zakat_due | round(2) }}
 </p>
 
 </div>
-
 {% endif %}
 
-<!-- ========================= -->
-<!-- 🗓️ ZAKAT TIMELINE (NEW) -->
-<!-- ========================= -->
-{% if zakat_due %}
-
+<!-- TIMELINE -->
+{% if zakat_due is not none %}
 <div class="dashboard-card text-center mb-5">
 
-<h4 class="gold-text">Zakat Timeline</h4>
+<h4 class="gold-text">{{ t('timeline') }}</h4>
 
-<p><strong>Today (Gregorian):</strong> {{ today }}</p>
-<p><strong>Today (Islamic):</strong> {{ hijri_today.day }} / {{ hijri_today.month }} / {{ hijri_today.year }}</p>
+<p><strong>{{ t('today_greg') }}:</strong> {{ today }}</p>
 
-<hr>
-
-<p><strong>Zakat Due Date (Gregorian):</strong> {{ due_date }}</p>
-
-{% if hijri_due %}
-<p><strong>Zakat Due Date (Islamic):</strong> {{ hijri_due.day }} / {{ hijri_due.month }} / {{ hijri_due.year }}</p>
+{% if hijri_today %}
+<p><strong>{{ t('today_islamic') }}:</strong> {{ hijri_today.day }}/{{ hijri_today.month }}/{{ hijri_today.year }}</p>
 {% endif %}
 
 <hr>
 
+<!-- ✅ USER ZAKAT DEADLINE -->
+{% if due_date %}
+<p><strong>{{ t('due_date_greg') }}:</strong> {{ due_date }}</p>
+{% endif %}
+
+{% if hijri_due %}
+<p><strong>{{ t('due_date_islamic') }}:</strong> {{ hijri_due.day }}/{{ hijri_due.month }}/{{ hijri_due.year }}</p>
+{% endif %}
+
+<hr>
+
+<!-- ✅ ISLAMIC YEAR COUNTDOWN -->
+{% if days_remaining_lunar is not none %}
 <p>
-<strong>Time Remaining:</strong><br>
-Gregorian: {{ days_remaining }} days<br>
-Islamic: {{ days_remaining_lunar }} days
+<strong>{{ t('time_remaining') }} ({{ t('islamic') }}):</strong><br>
+{{ days_remaining_lunar }} {{ t('days') }}
 </p>
+{% endif %}
+
+<!-- ✅ END OF ISLAMIC YEAR (CORRECT LABEL NOW) -->
+{% if islamic_year_end_date %}
+<p>
+<strong>{{ t('islamic_year_end') }}:</strong><br>
+{{ islamic_year_end_date }}
+</p>
+{% endif %}
 
 </div>
-
 {% endif %}
 
 <!-- REMINDER -->
 {% if reminder_message %}
-<div class="alert alert-warning text-center mb-4">
-<strong>{{ reminder_message }}</strong>
+<div class="alert alert-warning text-center">
+{{ reminder_message }}
 </div>
 {% endif %}
 
-<!-- ========================= -->
-<!-- DONATION PROGRESS -->
-<!-- ========================= -->
-{% if zakat_due %}
+<!-- PROGRESS -->
+{% if zakat_due and zakat_due > 0 %}
+<div class="card p-4 mb-5">
 
-<div class="card shadow-sm p-4 mb-5">
+<h4 class="gold-text mb-3">{{ t('progress') }}</h4>
 
-<h4 class="gold-text mb-3">Zakat Payment Progress</h4>
-
-<p><strong>Total Zakat Due:</strong> €{{ zakat_due }}</p>
-<p><strong>Donated This Year:</strong> €{{ donated }}</p>
-<p><strong>Remaining Zakat:</strong> €{{ remaining_zakat }}</p>
-<p><strong>Recommended Monthly Contribution:</strong> €{{ monthly_recommendation }}</p>
+<p>{{ t('total_due') }}: €{{ zakat_due }}</p>
+<p>{{ t('donated') }}: €{{ donated }}</p>
+<p>{{ t('remaining') }}: €{{ remaining_zakat }}</p>
 
 {% set progress = ((donated / zakat_due) * 100) if zakat_due else 0 %}
 
-<div class="progress mt-3" style="height:25px;">
+<div class="progress" style="height:25px;">
 <div class="progress-bar bg-success"
-role="progressbar"
-style="width: {{ progress }}%;">
+style="width: {{ progress }}%">
 {{ progress | round(1) }}%
 </div>
 </div>
 
 </div>
-
 {% endif %}
 
-<!-- ========================= -->
-<!-- ZAKAT HISTORY -->
-<!-- ========================= -->
+<!-- HISTORY -->
 <div class="mt-5">
 
-<h3 class="gold-text fw-bold mb-3">Zakat Eligibility History</h3>
-<p class="text-muted mb-4">Your past Zakat calculations are listed below.</p>
+<h3 class="gold-text mb-3">{{ t('history') }}</h3>
 
 {% if combined %}
-
-<div class="card shadow-sm">
+<div class="card">
 <div class="table-responsive">
 
-<table class="table table-hover mb-0">
+<table class="table table-hover">
 
-<thead style="background: var(--gold); color: white;">
+<thead>
 <tr>
-<th>Date</th>
-<th>Income (€)</th>
-<th>Savings (€)</th>
-<th>Gold (g)</th>
-<th>Debts (€)</th>
-<th>Result</th>
-<th>Explanation</th>
+<th>{{ t('date') }}</th>
+<th>{{ t('income') }}</th>
+<th>{{ t('savings') }}</th>
+<th>{{ t('gold') }}</th>
+<th>{{ t('debts') }}</th>
+<th>{{ t('result') }}</th>
 </tr>
 </thead>
 
 <tbody>
-
 {% for row, res in combined %}
 <tr>
 <td>{{ row.created_at }}</td>
@@ -168,11 +164,13 @@ style="width: {{ progress }}%;">
 <td>{{ row.savings }}</td>
 <td>{{ row.gold }}</td>
 <td>{{ row.debts }}</td>
-<td><strong>{{ res.result }}</strong></td>
-<td>{{ res.explanation }}</td>
+
+<td>
+{{ t(res.result) }}
+</td>
+
 </tr>
 {% endfor %}
-
 </tbody>
 
 </table>
@@ -181,10 +179,63 @@ style="width: {{ progress }}%;">
 </div>
 
 {% else %}
-<p class="text-muted">No Zakat history available yet.</p>
+<p class="text-muted">{{ t('no_history') }}</p>
 {% endif %}
 
 </div>
+
+<!-- CHART -->
+{% if labels and values and labels|length > 1 %}
+<div class="dashboard-card mt-5">
+
+<h4 class="gold-text text-center mb-4">{{ t('forecast') }}</h4>
+
+<div dir="ltr" style="height:400px;">
+    <canvas id="chart"></canvas>
+</div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+const labels = {{ labels | tojson }};
+const values = {{ values | tojson }};
+
+const ctx = document.getElementById("chart");
+
+if (ctx) {
+    new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: labels,
+            datasets: [{
+                label: "{{ t('savings') }} (€)",
+                data: values,
+                borderColor: "#C9A227",
+                backgroundColor: "rgba(201,162,39,0.2)",
+                fill: true,
+                tension: 0.4,
+                pointRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    reverse: false
+                },
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+</script>
+
+{% endif %}
 
 </div>
 

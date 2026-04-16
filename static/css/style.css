@@ -313,3 +313,33 @@ footer p {
     opacity: 1;
     transform: translateY(4px);
 }
+
+body[dir="rtl"] {
+    font-family: 'Cairo', sans-serif;
+    text-align: right;
+}
+
+/* ============================
+   LANGUAGE SUPPORT 
+============================ */
+
+body[dir="rtl"] {
+    font-family: 'Cairo', sans-serif;
+    text-align: right;
+}
+
+/* Fix navbar alignment in RTL */
+body[dir="rtl"] .navbar-nav {
+    margin-right: auto;
+    margin-left: 0;
+}
+
+/* Fix dropdown direction */
+body[dir="rtl"] .dropdown-menu {
+    text-align: right;
+}
+
+/* Fix text alignment */
+body[dir="rtl"] .text-center {
+    text-align: center !important;
+}

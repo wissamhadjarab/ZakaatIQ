@@ -3,11 +3,10 @@
 
 <div class="container py-5">
 
-    <!-- PAGE HEADER -->
     <div class="text-center mb-5">
-        <h2 class="gold-text fw-bold">Donate Your Zakat</h2>
+        <h2 class="gold-text fw-bold">{{ t('donate') }}</h2>
         <p class="text-muted">
-            Support verified charities and track your Zakat contributions securely.
+            {{ t('donate_desc') }}
         </p>
     </div>
 
@@ -18,52 +17,38 @@
 
                 <div class="text-center mb-4">
                     <i class="bi bi-heart-fill card-icon"></i>
-                    <h4 class="mt-3">Make a Donation</h4>
+                    <h4 class="mt-3 fw-bold">{{ t('make_donation') }}</h4>
                     <p class="text-muted mb-0">
-                        Choose how you want to pay your Zakat, then select a charity.
+                        {{ t('donate_help_text') if t('donate_help_text') != 'donate_help_text' else 'Choose how you want to pay your Zakat, then select a charity.' }}
                     </p>
                 </div>
 
                 <form method="POST">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-                    <!-- PAYMENT PLAN (MOVED FIRST) -->
                     <div class="mb-4">
-                        <label class="form-label"><strong>Payment Type</strong></label>
-
+                        <label class="form-label fw-semibold">{{ t('payment_type') }}</label>
                         <select name="payment_type" class="form-control" required>
-                            <option value="full">Pay Full Zakat Now</option>
-                            <option value="monthly">Monthly Contribution</option>
+                            <option value="full">{{ t('pay_full') if t('pay_full') != 'pay_full' else 'Pay Full Zakat Now' }}</option>
+                            <option value="monthly">{{ t('pay_monthly') if t('pay_monthly') != 'pay_monthly' else 'Monthly Contribution' }}</option>
                         </select>
-
-                        <small class="text-muted">
-                            Monthly contributions allow you to spread payments across the year.
-                        </small>
                     </div>
 
-                    <!-- AMOUNT -->
                     <div class="mb-4">
-                        <label class="form-label"><strong>Amount (€)</strong></label>
-
+                        <label class="form-label fw-semibold">{{ t('amount') }} (€)</label>
                         <input
                             type="number"
                             name="amount"
                             class="form-control"
                             step="0.01"
                             min="1"
-                            placeholder="Enter donation amount"
+                            placeholder="{{ t('amount_placeholder') if t('amount_placeholder') != 'amount_placeholder' else 'Enter donation amount' }}"
                             required
                         >
-
-                        <small class="text-muted">
-                            Enter the amount you wish to donate towards your Zakat obligation.
-                        </small>
                     </div>
 
-                    <!-- CHARITY SELECT -->
                     <div class="mb-4">
-                        <label class="form-label"><strong>Select Charity</strong></label>
-
+                        <label class="form-label fw-semibold">{{ t('select_charity') }}</label>
                         <select name="charity" class="form-control" required>
                             {% for charity in charities %}
                                 <option value="{{ charity[0] }}">
@@ -71,23 +56,14 @@
                                 </option>
                             {% endfor %}
                         </select>
-
-                        <small class="text-muted">
-                            Only verified charities are listed to ensure trust and transparency.
-                        </small>
                     </div>
 
-                    <!-- BUTTON -->
-                    <button
-                        type="submit"
-                        class="btn btn-success w-100 fw-bold py-3"
-                    >
-                        Proceed to Payment
+                    <button class="btn btn-success w-100 fw-bold py-3">
+                        {{ t('proceed_payment') }}
                     </button>
 
                 </form>
 
-                <!-- CONFIRMATION -->
                 {% if confirmation %}
                 <div class="alert alert-success mt-4 text-center">
                     {{ confirmation }}

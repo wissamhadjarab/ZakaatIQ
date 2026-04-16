@@ -3,67 +3,60 @@
 
 <div class="container py-5">
 
-<!-- HEADER -->
-<div class="text-center mb-5">
-    <h2 class="gold-text fw-bold">AI Income Forecast</h2>
-    <p class="text-muted">
-        Generate a financial projection based on your recorded financial history.
+    <!-- HEADER -->
+    <div class="text-center mb-5">
+        <h2 class="gold-text fw-bold">{{ t('forecast') }}</h2>
+        <p class="text-muted">{{ t('forecast_desc') }}</p>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="dashboard-card text-center">
+                <i class="bi bi-graph-up card-icon"></i>
+
+                <h4 class="mt-3">{{ t('generate_forecast') }}</h4>
+
+                <p class="text-muted mb-4">
+                    {{ t('forecast_btn_desc') }}
+                </p>
+
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="btn btn-warning px-4 py-2 fw-bold">
+                        {{ t('generate_forecast') }}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {% if message %}
+    <div class="row justify-content-center mt-4">
+        <div class="col-lg-8">
+            <div class="alert alert-warning text-center">
+                {{ message }}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if labels and labels|length > 1 %}
+    <p class="text-center text-muted mt-4">
+        📈 {{ t('forecast_graph_desc') }}
     </p>
-</div>
 
-<div class="row justify-content-center">
-<div class="col-lg-8">
+    <div class="row justify-content-center mt-5">
+        <div class="col-lg-10">
+            <div class="dashboard-card p-4">
+                <h4 class="gold-text mb-4 text-center">{{ t('income_trend') }}</h4>
 
-<div class="dashboard-card text-center">
-
-<i class="bi bi-graph-up card-icon"></i>
-
-<h4 class="mt-3">Generate Forecast</h4>
-
-<p class="text-muted mb-4">
-Predict your financial growth using historical income data.
-</p>
-
-<form method="POST">
-<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-<button class="btn btn-warning px-4 py-2 fw-bold">
-Generate Forecast
-</button>
-</form>
-
-</div>
-</div>
-</div>
-
-<!-- MESSAGE -->
-{% if message %}
-<div class="row justify-content-center mt-4">
-<div class="col-lg-8">
-<div class="alert alert-warning text-center">
-{{ message }}
-</div>
-</div>
-</div>
-{% endif %}
-
-<p class="text-muted text-center mb-3">
-This graph shows your past savings and predicts future savings based on your monthly saving habits.
-Future values are estimates and may vary.
-</p>
-
-<!-- CHART -->
-{% if labels and labels|length > 1 %}
-<div class="row justify-content-center mt-5">
-<div class="col-lg-8">
-
-<div class="dashboard-card">
-<h4 class="gold-text mb-4 text-center">Income Trend</h4>
-<canvas id="forecastChart"></canvas>
-</div>
-
-</div>
-</div>
-{% endif %}
+                <div dir="ltr" style="height: 420px; width: 100%;">
+                    <canvas id="forecastChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
 </div>
 
@@ -71,15 +64,12 @@ Future values are estimates and may vary.
 
 {% if labels and labels|length > 1 %}
 <script>
+const labels = {{ labels | tojson if labels else '[]' }};
+const income = {{ income | tojson if income else '[]' }};
 
-window.addEventListener("load", function() {
+const canvas = document.getElementById("forecastChart");
 
-    const labels = JSON.parse('{{ labels | tojson | safe }}');
-    const income = JSON.parse('{{ income | tojson | safe }}');
-
-    const canvas = document.getElementById("forecastChart");
-    if (!canvas) return;
-
+if (canvas) {
     const ctx = canvas.getContext("2d");
 
     new Chart(ctx, {
@@ -87,25 +77,55 @@ window.addEventListener("load", function() {
         data: {
             labels: labels,
             datasets: [{
-                label: "Income (€)",
+                label: "{{ t('income') }}",
                 data: income,
                 borderColor: "#C9A227",
-                backgroundColor: "rgba(201,162,39,0.2)",
+                backgroundColor: "rgba(201,162,39,0.18)",
                 borderWidth: 3,
-                tension: 0.4,
-                fill: true
+                tension: 0.35,
+                fill: true,
+                pointRadius: 5,
+                pointHoverRadius: 6,
+                pointBackgroundColor: "#C9A227"
             }]
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: "index",
+                intersect: false
+            },
             plugins: {
-                legend: { display: true }
+                legend: {
+                    display: true,
+                    labels: {
+                        boxWidth: 24
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    reverse: false,
+                    ticks: {
+                        autoSkip: true,
+                        maxRotation: 35,
+                        minRotation: 35
+                    },
+                    grid: {
+                        display: true
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        display: true
+                    }
+                }
             }
         }
     });
-
-});
-
+}
 </script>
 {% endif %}
 

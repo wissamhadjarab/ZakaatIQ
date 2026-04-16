@@ -2,39 +2,27 @@
 {% block content %}
 
 <div class="container col-md-4 mt-5">
-    <div class="card p-4 shadow">
+<div class="card auth-card p-4">
 
-        <h2 class="text-center mb-4">Create Account</h2>
+<h2 class="text-center mb-4 gold-text fw-bold">{{ t('register') }}</h2>
 
-        {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                <div class="alert alert-warning">{{ messages[0] }}</div>
-            {% endif %}
-        {% endwith %}
+<form action="{{ url_for('auth.register') }}" method="POST">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-        <form action="{{ url_for('auth.register') }}" method="POST">
-             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            
-            <div class="mb-3">
-                <label class="form-label">Username</label>
-                <input name="username" type="text" class="form-control" required>
-            </div>
+<label>{{ t('username') }}</label>
+<input name="username" class="form-control mb-3" required>
 
-            <div class="mb-3">
-                <label class="form-label">Password</label>
-                <input name="password" type="password" class="form-control" required>
-            </div>
+<label>{{ t('password') }}</label>
+<input name="password" type="password" class="form-control mb-3" required>
 
-            <div class="mb-3">
-                <label class="form-label">Confirm Password</label>
-                <input name="confirm" type="password" class="form-control" required>
-            </div>
+<label>{{ t('confirm_password') }}</label>
+<input name="confirm_password" type="password" class="form-control mb-3" required>
 
-            <button class="btn btn-success w-100">Register</button>
+<button class="btn btn-success w-100">{{ t('register') }}</button>
 
-        </form>
+</form>
 
-    </div>
+</div>
 </div>
 
 {% endblock %}
