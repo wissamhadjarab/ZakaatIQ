@@ -27,8 +27,11 @@ git clone https://github.com/wissamhadjarab/Final-Year-Project.git
 cd Final-Year-Project
 # 2. Install dependencies
 pip install -r requirements.txt
-# 3. Run application
-python3 app.py
+# 3. Run application (Steps for MacOS)
+python3 -m venv venv    
+source venv/bin/activate
+pip install flask  
+python app.py        
 # 4. Access browser from terminal 
 http://127.0.0.1:5000/
 

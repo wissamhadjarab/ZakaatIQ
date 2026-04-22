@@ -1,6 +1,7 @@
 import sys
 import os
 
+# Allow imports from parent directory
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import pytest
@@ -34,7 +35,7 @@ def test_zakat_required():
     }
 
     z = calculate_zakat(data)
-    assert z.is_above_nisab == True
+    assert z.is_above_nisab is True
     assert z.zakat_due > 0
 
 
@@ -60,7 +61,7 @@ def test_zakat_not_required():
     }
 
     z = calculate_zakat(data)
-    assert z.is_above_nisab == False
+    assert z.is_above_nisab is False
 
 
 # -----------------------------
@@ -85,15 +86,20 @@ def test_safe_decrypt_invalid():
 
 
 # -----------------------------
-# ML TEST (BASIC)
+# ML MODEL TEST
 # -----------------------------
 
 def test_ml_prediction_runs():
     import pickle
-    model = pickle.load(open("models/eligibility_model.pkl", "rb"))
+
+    model_path = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), '..', 'models', 'eligibility_model.pkl')
+    )
+
+    model = pickle.load(open(model_path, "rb"))
 
     sample = [[3000, 5000, 10, 1000]]
 
     prediction = model.predict(sample)
 
-    assert prediction is not None
+    assert prediction[0] in [0, 1]
