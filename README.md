@@ -41,7 +41,7 @@ http://127.0.0.1:5000/register
 
 ## Use system
 # 1. Start application 
-python3 app.py
+python app.py
 
 # 2. Open homepage 
 http://127.0.0.1:5000/
